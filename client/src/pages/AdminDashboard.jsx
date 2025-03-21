@@ -1,10 +1,18 @@
-import React from "react";
+import React, { useEffect } from "react";
 import BackDrop from "../components/BackDrop";
 import { actionServices } from "../includes/includes";
 import "../styles/adminDashboard.css";
 import Services from "../components/Services";
+import { useParams } from "react-router";
 
 function AdminDashboard() {
+  let { id } = useParams();
+
+  useEffect(() => {
+    console.log("This is id: ", id);
+  }, [id]);
+  // ...
+
   return (
     <BackDrop>
       <div style={{ padding: "0 1.5em" }}>
@@ -30,7 +38,7 @@ function AdminDashboard() {
                 <hr />
                 <div className="actionButtonsContainer">
                   {Object.values(service)[0].map((option, index) => {
-                    return <Services option={option} index={index} />;
+                    return <Services option={option} key={index} />;
                   })}
                 </div>
               </div>

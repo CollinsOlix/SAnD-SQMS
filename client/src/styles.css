@@ -7,8 +7,6 @@ body {
   display: flex;
   background-color: #0c2a5d;
   font-family: arial;
-  /* justify-content: right;
-  align-items: right; */
 }
 .login-container {
   background: #3b75d6;

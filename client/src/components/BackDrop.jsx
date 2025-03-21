@@ -11,7 +11,7 @@ function BackDrop({ children }) {
           <NavLink to="/staff-sign-in">Staff Login</NavLink>
         </div>
       </nav>
-      {children}
+      <div style={{ flex: 1 }}>{children}</div>
     </div>
   );
 }

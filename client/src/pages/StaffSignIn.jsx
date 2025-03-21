@@ -12,14 +12,7 @@ function StaffSignIn() {
           style={{
             backgroundColor: "#fff",
           }}
-        >
-          <SignInComponent
-            headerText={"Sign in as an Admin"}
-            buttonText="Admin Sign In"
-            usernameText="Admin ID Number"
-            passwordText="Password"
-          />
-        </div>
+        ></div>
         <div className="staffSignInContainer">
           <SignInComponent
             headerText={"Sign in as a Staff"}

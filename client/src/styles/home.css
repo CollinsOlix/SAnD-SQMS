@@ -1,0 +1,167 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+.head button {
+  flex: 1;
+  width: 337px;
+  height: 50px;
+  margin: 2px;
+  padding: 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 17px;
+  color: #3b75d6;
+  margin-top: 30px;
+  border-radius: 10px;
+}
+
+.head button:hover {
+  background-color: #3b75d6;
+  color: white;
+}
+
+.home-login-container {
+  background: #3b75d6;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  color: white;
+  width: 80%;
+  height: 100%;
+}
+
+s .home-login-container h2 {
+}
+
+.home-input {
+  margin-bottom: 10px;
+  margin-top: 30px;
+  text-align: left;
+}
+
+.home-input label {
+  display: block;
+  font-size: 14px;
+}
+
+.home-input input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 5px;
+  border: none;
+  margin-bottom: 20px;
+}
+
+.home-input select {
+  width: 100%;
+  padding: 7px;
+  border-radius: 5px;
+  border: none;
+  margin-bottom: 30px;
+}
+
+.get-ticket button {
+  flex: 1;
+  height: 50px;
+  margin: 5px;
+  padding: 15px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 17px;
+  color: #3b75d6;
+  border-radius: 10px;
+  background-color: #fff;
+}
+
+button:hover {
+  background-color: #12326e;
+  color: white;
+}
+
+.board {
+  background-color: white;
+  padding: 40px;
+  border-radius: 10px;
+  width: 90%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  /* align-items: center; */
+}
+.home-day-and-time {
+  flex: 1;
+  display: flex;
+}
+.home-text {
+  margin: 0.5em 0;
+  font-weight: 500;
+  font-size: larger;
+}
+.home-title {
+  color: #12326e;
+}
+.days-section {
+  flex: 1;
+  display: flex;
+}
+
+.UB {
+  display: flex;
+  font-size: 12px;
+  margin-top: none;
+}
+
+.UB div {
+  padding: 15px;
+}
+
+.status-section {
+  text-align: center;
+  /* margin: 30px 0; */
+  /* margin-bottom: 30px; */
+}
+
+.current-status {
+  font-size: 18px;
+  color: #12326e;
+  font-weight: bold;
+}
+
+.date {
+  font-size: 12px;
+  color: #666;
+  margin-top: 5px;
+}
+
+.metrics-section {
+  display: flex;
+  justify-content: space-around;
+  text-align: center;
+  /* margin-top: 30px; */
+}
+
+.metric {
+  flex: 1;
+  text-align: left;
+}
+
+.metric-value {
+  font-size: 5em;
+  font-weight: bold;
+  color: #12326e;
+  padding: 0;
+}
+
+.metric-label {
+  font-size: 12px;
+  color: #666;
+}
+
+input {
+  font-size: medium;
+}
