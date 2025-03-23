@@ -31,15 +31,18 @@
   color: white;
   width: 80%;
   height: 100%;
-}
-
-s .home-login-container h2 {
+  display: flex;
+  flex-direction: column;
 }
 
 .home-input {
   margin-bottom: 10px;
-  margin-top: 30px;
+  /* margin-top: 30px; */
   text-align: left;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex: 1;
 }
 
 .home-input label {
@@ -52,7 +55,7 @@ s .home-login-container h2 {
   padding: 10px;
   border-radius: 5px;
   border: none;
-  margin-bottom: 20px;
+  /* margin-bottom: 20px; */
 }
 
 .home-input select {
@@ -60,13 +63,13 @@ s .home-login-container h2 {
   padding: 7px;
   border-radius: 5px;
   border: none;
-  margin-bottom: 30px;
+  margin-bottom: auto;
 }
 
 .get-ticket button {
   flex: 1;
   height: 50px;
-  margin: 5px;
+  /* margin: 5px; */
   padding: 15px;
   border: none;
   border-radius: 5px;
@@ -84,23 +87,22 @@ button:hover {
 
 .board {
   background-color: white;
-  padding: 40px;
+  padding: 20px;
   border-radius: 10px;
   width: 90%;
   height: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  /* align-items: center; */
+  justify-content: space-between;
 }
 .home-day-and-time {
-  flex: 1;
+  /* flex: 1; */
   display: flex;
 }
 .home-text {
-  margin: 0.5em 0;
+  margin: 0.3em 0;
   font-weight: 500;
-  font-size: larger;
+  font-size: medium;
 }
 .home-title {
   color: #12326e;
@@ -140,7 +142,7 @@ button:hover {
 
 .metrics-section {
   display: flex;
-  justify-content: space-around;
+  /* justify-content: space-around; */
   text-align: center;
   /* margin-top: 30px; */
 }
@@ -148,6 +150,7 @@ button:hover {
 .metric {
   flex: 1;
   text-align: left;
+  line-height: normal;
 }
 
 .metric-value {
@@ -155,6 +158,8 @@ button:hover {
   font-weight: bold;
   color: #12326e;
   padding: 0;
+  height: fit-content;
+  line-height: 1;
 }
 
 .metric-label {
@@ -162,6 +167,14 @@ button:hover {
   color: #666;
 }
 
-input {
+.homeInput {
   font-size: medium;
+}
+
+
+.error {
+  color: red;
+  font-size: 12px;
+  margin-top: 5px;
+  text-align: center;
 }

@@ -1,7 +1,32 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+
 import "../styles/home.css";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../config/firebase";
 
 function Home() {
+  const [errorMessage, setErrorMessage] = useState();
+
+  const getCustomerData = async (customerNumber, firstName) => {
+    const docRef = doc(db, "customers", customerNumber);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      if (docSnap.data().firstName === firstName) {
+        return docSnap.data();
+      } else {
+        setErrorMessage("First Name not recognized");
+        return "First Name not recognized";
+      }
+    } else {
+      setErrorMessage("Customer Number does not exist!");
+      return "Customer Number does not exist!";
+    }
+  };
+
+  useEffect(() => {
+    // getCustomerData("cust1", "test");
+  }, []);
   return (
     <div style={{ height: "100%" }}>
       <div style={{ textAlign: "center", padding: "0.3em", color: "white" }}>
@@ -71,13 +96,13 @@ function Home() {
             </div>
             <div className="metrics-section">
               <div className="metric">
-                <div className="metric-value">20</div>
+                <span className="metric-value">20</span>
                 <div className="metric-label">Visitor's currently waiting</div>
               </div>
               <div className="metric">
-                <div className="metric-value">
+                <span className="metric-value">
                   10<span style={{ fontSize: "24px" }}>mins</span>
-                </div>
+                </span>
                 <div className="metric-label">Average waiting time</div>
               </div>
             </div>
@@ -92,23 +117,62 @@ function Home() {
             display: "flex",
             flexDirection: "column",
             padding: "1em",
-          }}>
+          }}
+        >
           <div className="home-login-container">
             <h2>Sign in to SAnD's SQMS</h2>
             <div className="home-input">
-              <div>
-                <label>
-                  {" "}
-                  <b>First Name </b>
-                </label>
-                <input type="text" placeholder=" First name goes here..." />
+              <div
+                className="error-container"
+                style={{
+                  display: errorMessage ? "block" : "none",
+                  padding: "0.1em",
+                  backgroundColor: "white",
+                }}
+              >
+                <p className="error">{errorMessage}</p>
               </div>
               <div>
                 <label>
-                  {" "}
+                  <b>First Name </b>
+                </label>
+                <input
+                  style={{
+                    border:
+                      errorMessage &&
+                      errorMessage === "First Name not recognized"
+                        ? "2px solid red"
+                        : "",
+                    color:
+                      errorMessage &&
+                      errorMessage === "First Name not recognized"
+                        ? "red"
+                        : "",
+                  }}
+                  className="homeInput"
+                  type="text"
+                  placeholder=" First name goes here..."
+                />
+              </div>
+              <div>
+                <label>
                   <b>Customer Number or Phone Number </b>
                 </label>
-                <input type="text" placeholder="Customer ID or Phone Number" />
+                <input
+                  style={{
+                    border:
+                      errorMessage && errorMessage === "An Error Message"
+                        ? "2px solid red"
+                        : "",
+                    color:
+                      errorMessage && errorMessage === "An Error Message"
+                        ? "red"
+                        : "",
+                  }}
+                  className="homeInput"
+                  type="text"
+                  placeholder="Customer ID or Phone Number"
+                />
               </div>
 
               <div>
@@ -131,9 +195,12 @@ function Home() {
               </div>
 
               <div className="get-ticket">
-                <button>
-                  {" "}
-                  <b>Get a Ticket</b>{" "}
+                <button
+                  onClick={() => {
+                    getCustomerData("cust1", "test");
+                  }}
+                >
+                  <b>Get a Ticket</b>
                 </button>
               </div>
             </div>

@@ -4,11 +4,14 @@ import { actionServices } from "../includes/includes";
 import "../styles/adminDashboard.css";
 import Services from "../components/Services";
 import { useParams } from "react-router";
+import ReactDOM from "react-dom";
+import Modal from "react-modal";
 
 function AdminDashboard() {
   let { id } = useParams();
 
   useEffect(() => {
+    // getCustomerData("cust1", "test");
     console.log("This is id: ", id);
   }, [id]);
   // ...
@@ -45,6 +48,9 @@ function AdminDashboard() {
             );
           })}
         </div>
+        <Modal>
+          <h2>Modal Title</h2>
+        </Modal>
       </div>
     </BackDrop>
   );
