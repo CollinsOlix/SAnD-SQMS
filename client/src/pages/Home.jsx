@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import "../styles/home.css";
 import { doc, getDoc } from "firebase/firestore";
@@ -6,6 +6,14 @@ import { db } from "../config/firebase";
 
 function Home() {
   const [errorMessage, setErrorMessage] = useState();
+  const [availableBranches, setAvailableBranches] = useState();
+  const [availableServices, setAvailableServices] = useState();
+  const [firstName, setFirstName] = useState();
+  const [customerNumber, setCustomerNumber] = useState();
+  const [customerBranchOption, setCustomerBranchOption] = useState();
+  const [service, setService] = useState();
+  const branchOptionsRef = useRef(null);
+  const serviceOptionsRef = useRef(null);
 
   const getCustomerData = async (customerNumber, firstName) => {
     const docRef = doc(db, "customers", customerNumber);
@@ -24,9 +32,66 @@ function Home() {
     }
   };
 
+  const fetchBranches = async () => {
+    await fetch("http://localhost:5000/get-branches")
+      .then((response) => response.json())
+      .then((data) => {
+        setAvailableBranches(data);
+      });
+  };
+  useLayoutEffect(() => {
+    fetchBranches();
+  }, []);
+
   useEffect(() => {
     // getCustomerData("cust1", "test");
+    setService(serviceOptionsRef.current?.value);
+    setCustomerBranchOption(branchOptionsRef.current?.value);
   }, []);
+
+  useEffect(() => {
+    let dataa =
+      availableBranches &&
+      availableBranches
+        .find(
+          (aBranch) =>
+            aBranch.branchName === customerBranchOption ||
+            aBranch.branchName === branchOptionsRef.current.value
+        )
+        ?.services.map((item) => item);
+    availableBranches && setAvailableServices(dataa);
+  }, [customerBranchOption, availableBranches]);
+
+  const submitUserData = async () => {
+    try {
+      console.log("Fetching Data");
+      await fetch("http://localhost:5000", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          firstName,
+          customerNumber,
+          service: serviceOptionsRef.current.value,
+          branch: branchOptionsRef.current.value,
+        }),
+      })
+        .then(async (response) => {
+          let jsonData = await response.json();
+          console.log(jsonData);
+          return jsonData;
+        })
+        .then((data) => {
+          if (typeof data === "string") {
+            setErrorMessage(data);
+          }
+        });
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
   return (
     <div style={{ height: "100%" }}>
       <div style={{ textAlign: "center", padding: "0.3em", color: "white" }}>
@@ -59,7 +124,9 @@ function Home() {
                   <h2 className="home-title">Open Days</h2>
                   {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(
                     (day, index) => (
-                      <h4 className="home-text">{day}</h4>
+                      <h4 key={index} className="home-text">
+                        {day}
+                      </h4>
                     )
                   )}
                 </div>
@@ -73,8 +140,10 @@ function Home() {
                     "9:00 AM - 5:00 PM",
                     "CLOSED",
                     "CLOSED",
-                  ].map((time) => (
-                    <h4 className="home-text">{time}</h4>
+                  ].map((time, index) => (
+                    <h4 key={time + index} className="home-text">
+                      {time}
+                    </h4>
                   ))}
                 </div>
               </div>
@@ -83,8 +152,10 @@ function Home() {
                   <h2 className="home-title">Busy Days.</h2>
 
                   {["Moderately", "Moderately", "Very", "Lightly", ""].map(
-                    (time) => (
-                      <h4 className="home-text">{time} Busy</h4>
+                    (time, index) => (
+                      <h4 key={time + index} className="home-text">
+                        {time} Busy
+                      </h4>
                     )
                   )}
                 </div>
@@ -121,6 +192,7 @@ function Home() {
         >
           <div className="home-login-container">
             <h2>Sign in to SAnD's SQMS</h2>
+
             <div className="home-input">
               <div
                 className="error-container"
@@ -137,20 +209,29 @@ function Home() {
                   <b>First Name </b>
                 </label>
                 <input
+                  type="text"
+                  name="firstName"
+                  onInput={(e) => {
+                    setErrorMessage();
+                    setFirstName(e.target.value);
+                  }}
                   style={{
                     border:
                       errorMessage &&
                       errorMessage === "First Name not recognized"
+                        ? "2px solid red"
+                        : errorMessage === "Invalid Name"
                         ? "2px solid red"
                         : "",
                     color:
                       errorMessage &&
                       errorMessage === "First Name not recognized"
                         ? "red"
+                        : errorMessage === "Invalid Name"
+                        ? "red"
                         : "",
                   }}
                   className="homeInput"
-                  type="text"
                   placeholder=" First name goes here..."
                 />
               </div>
@@ -159,6 +240,9 @@ function Home() {
                   <b>Customer Number or Phone Number </b>
                 </label>
                 <input
+                  type="number"
+                  name="customerNumber"
+                  onInput={(e) => setCustomerNumber(e.target.value)}
                   style={{
                     border:
                       errorMessage && errorMessage === "An Error Message"
@@ -170,7 +254,6 @@ function Home() {
                         : "",
                   }}
                   className="homeInput"
-                  type="text"
                   placeholder="Customer ID or Phone Number"
                 />
               </div>
@@ -179,25 +262,38 @@ function Home() {
                 <label>
                   <b>Select a branch</b>
                 </label>
-                <select>
-                  <option value="">Branch A</option>
-                  <option value="">Branch B</option>
+                <select
+                  ref={branchOptionsRef}
+                  id="branchOptions"
+                  onChange={(e) => {
+                    setCustomerBranchOption(e.target.value);
+                  }}
+                >
+                  {availableBranches?.map((aBranch) => (
+                    <option key={aBranch.branchID} value={aBranch.branchName}>
+                      {aBranch.branchName}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div>
                 <label>
                   <b>Select a service</b>
                 </label>
-                <select>
-                  <option value="">Service A</option>
-                  <option value="">Service B</option>
+                <select ref={serviceOptionsRef} id="serviceOptions">
+                  {availableServices &&
+                    availableServices.map((service) => (
+                      <option key={service} value={service}>
+                        {service}
+                      </option>
+                    ))}
                 </select>
               </div>
 
               <div className="get-ticket">
                 <button
-                  onClick={() => {
-                    getCustomerData("cust1", "test");
+                  onClick={async () => {
+                    await submitUserData();
                   }}
                 >
                   <b>Get a Ticket</b>

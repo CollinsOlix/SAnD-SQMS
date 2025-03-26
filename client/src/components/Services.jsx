@@ -1,9 +1,15 @@
 import React from "react";
 import "../styles/adminDashboard.css";
 
-function Services({ option, index }) {
+function Services({ option, index, setIsModalOpen, setActiveModal }) {
   return (
-    <div className="serviceContainer">
+    <div
+      className="serviceContainer"
+      onClick={() => {
+        setActiveModal(Object.values(option)[0].action);
+        setIsModalOpen(true);
+      }}
+    >
       <div key={index} className="serviceWrapper">
         <div className="service" onClick={Object.values(option)[0].onClick}>
           <div className="iconContainer">{Object.values(option)[0].icon}</div>

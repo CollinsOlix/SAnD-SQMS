@@ -40,3 +40,11 @@
   justify-content: space-between;
   color: #fff;
 }
+.adminDashInput {
+  width: 100%;
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 30px;
+  font-size: medium;
+}
+

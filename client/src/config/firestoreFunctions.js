@@ -16,4 +16,6 @@ const getCustomerData = async (customerNumber, firstName) => {
   }
 };
 
+
+
 export { getCustomerData };

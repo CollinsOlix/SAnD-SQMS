@@ -23,6 +23,7 @@ const actionServices = [
             />
           ),
           onClick: addBranch,
+          action: "Add Branch",
         },
       },
       {
@@ -35,6 +36,7 @@ const actionServices = [
             />
           ),
           onClick: addBranch,
+          action: "Remove a Branch",
         },
       },
       {
@@ -99,6 +101,7 @@ const actionServices = [
             />
           ),
           onClick: addBranch,
+          action: "Add Queue",
         },
       },
       {
@@ -111,6 +114,7 @@ const actionServices = [
             />
           ),
           onClick: addBranch,
+          action: "Remove Queue",
         },
       },
       {
