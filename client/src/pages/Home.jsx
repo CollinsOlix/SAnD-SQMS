@@ -3,6 +3,8 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import "../styles/home.css";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../config/firebase";
+import Board from "../components/Board";
+import Dropdown from "../components/Dropdown";
 
 function Home() {
   const [errorMessage, setErrorMessage] = useState();
@@ -98,98 +100,11 @@ function Home() {
         <h3>Tired of spending long wait times at the queues?</h3>
         <h4>Get a ticket and wait from the comfort of your home.</h4>
       </div>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          flex: 1,
-          height: "90%",
-        }}
-      >
-        <div
-          style={{
-            flex: 3,
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            height: "80%",
-            padding: "1em",
-          }}
-        >
-          <div className="board">
-            <div className="home-day-and-time">
-              <div className="days-section">
-                <div>
-                  <h2 className="home-title">Open Days</h2>
-                  {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(
-                    (day, index) => (
-                      <h4 key={index} className="home-text">
-                        {day}
-                      </h4>
-                    )
-                  )}
-                </div>
-                <div>
-                  <h2 className="home-title">.</h2>
-                  {[
-                    "9:00 AM - 5:00 PM",
-                    "9:00 AM - 5:00 PM",
-                    "9:00 AM - 5:00 PM",
-                    "9:00 AM - 5:00 PM",
-                    "9:00 AM - 5:00 PM",
-                    "CLOSED",
-                    "CLOSED",
-                  ].map((time, index) => (
-                    <h4 key={time + index} className="home-text">
-                      {time}
-                    </h4>
-                  ))}
-                </div>
-              </div>
-              <div className="days-section">
-                <div>
-                  <h2 className="home-title">Busy Days.</h2>
-
-                  {["Moderately", "Moderately", "Very", "Lightly", ""].map(
-                    (time, index) => (
-                      <h4 key={time + index} className="home-text">
-                        {time} Busy
-                      </h4>
-                    )
-                  )}
-                </div>
-              </div>
-            </div>
-            <div className="status-section">
-              <div className="current-status">Currently Moderately Busy</div>
-              <div className="date">Friday, March 8, 2025</div>
-            </div>
-            <div className="metrics-section">
-              <div className="metric">
-                <span className="metric-value">20</span>
-                <div className="metric-label">Visitor's currently waiting</div>
-              </div>
-              <div className="metric">
-                <span className="metric-value">
-                  10<span style={{ fontSize: "24px" }}>mins</span>
-                </span>
-                <div className="metric-label">Average waiting time</div>
-              </div>
-            </div>
-          </div>
+      <div className="home-a">
+        <div className="home-b">
+          <Board />
         </div>
-        <div
-          style={{
-            flex: 2,
-            height: "80%",
-            alignItems: "center",
-            justifyContent: "center",
-            display: "flex",
-            flexDirection: "column",
-            padding: "1em",
-          }}
-        >
+        <div className="home-c">
           <div className="home-login-container">
             <h2>Sign in to SAnD's SQMS</h2>
 
@@ -262,32 +177,20 @@ function Home() {
                 <label>
                   <b>Select a branch</b>
                 </label>
-                <select
-                  ref={branchOptionsRef}
-                  id="branchOptions"
-                  onChange={(e) => {
-                    setCustomerBranchOption(e.target.value);
-                  }}
-                >
-                  {availableBranches?.map((aBranch) => (
-                    <option key={aBranch.branchID} value={aBranch.branchName}>
-                      {aBranch.branchName}
-                    </option>
-                  ))}
-                </select>
+                <Dropdown
+                  refProp={branchOptionsRef}
+                  availableOptions={availableBranches}
+                />
               </div>
               <div>
                 <label>
                   <b>Select a service</b>
                 </label>
-                <select ref={serviceOptionsRef} id="serviceOptions">
-                  {availableServices &&
-                    availableServices.map((service) => (
-                      <option key={service} value={service}>
-                        {service}
-                      </option>
-                    ))}
-                </select>
+
+                <Dropdown
+                  refProp={serviceOptionsRef}
+                  availableOptions={availableServices}
+                />
               </div>
 
               <div className="get-ticket">

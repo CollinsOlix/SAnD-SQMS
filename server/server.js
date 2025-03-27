@@ -30,7 +30,6 @@ app.post("/", async (request, response) => {
   console.log(deets);
   let { customerNumber, firstName, service, customerBranchOption } =
     request.body;
-  console.log(request.body);
   if (typeof firstName !== "string" || firstName.trim().length < 2) {
     response.json("Invalid Name");
   } else {

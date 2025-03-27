@@ -15,7 +15,15 @@ function Services({ option, index, setIsModalOpen, setActiveModal }) {
           <div className="iconContainer">{Object.values(option)[0].icon}</div>
         </div>
       </div>
-      <h4 style={{ textAlign: "center", fontSize: "1.1em", color: "white" }}>
+      <h4
+        style={{
+          textAlign: "center",
+          fontSize: "1.1em",
+          color: "white",
+          fontWeight: "normal",
+          marginTop: 10,
+        }}
+      >
         {Object.keys(option)[0]}
       </h4>
     </div>

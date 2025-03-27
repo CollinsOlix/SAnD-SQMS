@@ -171,10 +171,34 @@ button:hover {
   font-size: medium;
 }
 
-
 .error {
   color: red;
   font-size: 12px;
   margin-top: 5px;
   text-align: center;
+}
+
+.home-a {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+  height: 90%;
+}
+.home-b {
+  flex: 3;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 80%;
+  padding: 1em;
+}
+.home-c {
+  flex: 2;
+  height: 80%;
+  align-items: center;
+  justify-content: center;
+  display: flex;
+  flex-direction: column;
+  padding: 1em;
 }
