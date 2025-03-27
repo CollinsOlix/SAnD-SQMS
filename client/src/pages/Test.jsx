@@ -1,7 +1,9 @@
 import React from "react";
 
 function Test() {
-  return <div></div>;
+  return <div>
+    Ornelly goes to church
+  </div>;
 }
 
 export default Test;
