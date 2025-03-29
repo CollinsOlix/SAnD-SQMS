@@ -4,14 +4,16 @@ import "../styles/home.css";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../config/firebase";
 import Board from "../components/Board";
-import Dropdown from "../components/Dropdown";
+import { useNavigate } from "react-router";
 
 function Home() {
+  const navigate = useNavigate();
   const [errorMessage, setErrorMessage] = useState();
   const [availableBranches, setAvailableBranches] = useState();
   const [availableServices, setAvailableServices] = useState();
   const [firstName, setFirstName] = useState();
   const [customerNumber, setCustomerNumber] = useState();
+  const [trials, setTrials] = useState(0);
   const [customerBranchOption, setCustomerBranchOption] = useState();
   const [service, setService] = useState();
   const branchOptionsRef = useRef(null);
@@ -25,12 +27,14 @@ function Home() {
       if (docSnap.data().firstName === firstName) {
         return docSnap.data();
       } else {
-        setErrorMessage("First Name not recognized");
-        return "First Name not recognized";
+        setErrorMessage("Invalid First Name or Customer Number");
+        setTrials((trial) => trial + 1);
+        return "Invalid First Name or Customer Number";
       }
     } else {
-      setErrorMessage("Customer Number does not exist!");
-      return "Customer Number does not exist!";
+      setTrials((trial) => trial + 1);
+      setErrorMessage("Invalid First Name or Customer Number");
+      return "Invalid First Name or Customer Number";
     }
   };
 
@@ -41,7 +45,23 @@ function Home() {
         setAvailableBranches(data);
       });
   };
+  const userHasSession = async () => {
+    await fetch("http://localhost:5000/", {
+      method: "GET",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data && data.signedIn) {
+          navigate(`sessions/${data.sessionId}`);
+        }
+      });
+  };
   useLayoutEffect(() => {
+    userHasSession();
     fetchBranches();
   }, []);
 
@@ -69,6 +89,7 @@ function Home() {
       console.log("Fetching Data");
       await fetch("http://localhost:5000", {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
@@ -77,16 +98,19 @@ function Home() {
           customerNumber,
           service: serviceOptionsRef.current.value,
           branch: branchOptionsRef.current.value,
+          trials,
         }),
       })
         .then(async (response) => {
           let jsonData = await response.json();
-          console.log(jsonData);
           return jsonData;
         })
-        .then((data) => {
-          if (typeof data === "string") {
-            setErrorMessage(data);
+        .then((userData) => {
+          if (userData.signedIn) {
+            navigate(`sessions/${userData.sessionId}`);
+          }
+          if (typeof userData?.customerDetails === "string") {
+            setErrorMessage(userData.customerDetails);
           }
         });
     } catch (err) {
@@ -157,16 +181,9 @@ function Home() {
                 <input
                   type="number"
                   name="customerNumber"
-                  onInput={(e) => setCustomerNumber(e.target.value)}
-                  style={{
-                    border:
-                      errorMessage && errorMessage === "An Error Message"
-                        ? "2px solid red"
-                        : "",
-                    color:
-                      errorMessage && errorMessage === "An Error Message"
-                        ? "red"
-                        : "",
+                  onInput={(e) => {
+                    setErrorMessage(null);
+                    setCustomerNumber(e.target.value);
                   }}
                   className="homeInput"
                   placeholder="Customer ID or Phone Number"
@@ -177,25 +194,50 @@ function Home() {
                 <label>
                   <b>Select a branch</b>
                 </label>
-                <Dropdown
-                  refProp={branchOptionsRef}
-                  availableOptions={availableBranches}
-                />
+                <select
+                  ref={branchOptionsRef}
+                  id="branchOptions"
+                  onChange={(e) => {
+                    setCustomerBranchOption(e.target.value);
+                  }}
+                >
+                  {availableBranches?.map((aBranch) => (
+                    <option key={aBranch.branchID} value={aBranch.branchName}>
+                      {aBranch.branchName}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label>
                   <b>Select a service</b>
                 </label>
-
-                <Dropdown
-                  refProp={serviceOptionsRef}
-                  availableOptions={availableServices}
-                />
+                <select
+                  ref={serviceOptionsRef}
+                  id="serviceOptions"
+                  onChange={(e) => {
+                    setService(e.target.value);
+                  }}
+                >
+                  {availableServices &&
+                    availableServices.map((service) => (
+                      <option key={service} value={service}>
+                        {service}
+                      </option>
+                    ))}
+                </select>
               </div>
 
               <div className="get-ticket">
                 <button
                   onClick={async () => {
+                    if (trials >= 7) {
+                      setErrorMessage(
+                        "Too many incorrect signin attempts, Please visit a branch closest to you"
+                      );
+                      return;
+                    }
+                    setErrorMessage(null);
                     await submitUserData();
                   }}
                 >
