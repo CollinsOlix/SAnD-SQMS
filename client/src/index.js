@@ -6,7 +6,6 @@ import { BrowserRouter, Route, Routes } from "react-router";
 import StaffSignIn from "./pages/StaffSignIn";
 import AdminDashboard from "./pages/AdminDashboard";
 import Test from "./pages/Test";
-import OnlineServiceCenter from "./pages/onlineServiceCenter";
 import ServiceCenter from "./pages/ServiceCenter";
 import AppContext from "./includes/context";
 
