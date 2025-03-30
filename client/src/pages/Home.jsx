@@ -56,7 +56,7 @@ function Home() {
       .then((response) => response.json())
       .then((data) => {
         if (data && data.signedIn) {
-          navigate(`sessions/${data.sessionId}`);
+          navigate(`sessions/${data.sessionId}`, {});
         }
       });
   };
@@ -80,13 +80,15 @@ function Home() {
             aBranch.branchName === customerBranchOption ||
             aBranch.branchName === branchOptionsRef.current.value
         )
-        ?.services.map((item) => item);
+        .availableServices.map((item) => [
+          item.serviceName,
+          item.serviceCurrentNumber,
+        ]);
     availableBranches && setAvailableServices(dataa);
   }, [customerBranchOption, availableBranches]);
 
   const submitUserData = async () => {
     try {
-      console.log("Fetching Data");
       await fetch("http://localhost:5000", {
         method: "POST",
         credentials: "include",
@@ -221,8 +223,8 @@ function Home() {
                 >
                   {availableServices &&
                     availableServices.map((service) => (
-                      <option key={service} value={service}>
-                        {service}
+                      <option key={service[0]} value={service[0]}>
+                        {service[0]}
                       </option>
                     ))}
                 </select>
