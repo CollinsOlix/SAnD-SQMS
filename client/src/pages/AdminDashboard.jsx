@@ -126,7 +126,6 @@ function AdminDashboard() {
 
   useEffect(() => {
     // getCustomerData("cust1", "test");
-    console.log("This is id: ", id);
   }, [id, activeModal]);
   // ...
 

@@ -10,6 +10,9 @@ const {
   addBranch,
   getSessions,
   createNewSession,
+  fetchServices,
+  updateServiceQueueNumber,
+  joinServiceQueue,
 } = require("./config/firestoreFunctions");
 const PORT = 5000;
 
@@ -18,6 +21,9 @@ app.use(cookieParser());
 let trials = 0;
 
 app.use(express.json({ type: "application/json" }));
+
+//
+//CORS policies
 app.use(
   cors({
     origin: "http://localhost:3000",
@@ -90,6 +96,12 @@ app.post("/", async (request, response) => {
   }
 });
 
+app.get("/updateService", async (request, response) => {
+  // const { index, branch } = request.query;
+  const jees = await updateServiceQueueNumber("Apex Bank ( Girne )", 0);
+  response.json(jees);
+});
+
 app.get("/", (request, response) => {
   if (request.cookies?.sqms) {
     const userData = jwt.verify(request.cookies.sqms, process.env.JWTSECRET);
@@ -100,7 +112,7 @@ app.get("/", (request, response) => {
   }
 });
 
-app.post("/test", (request, response) => {
+app.post("/user", (request, response) => {
   if (!request.cookies.sqms) {
     response.json("User not logged in");
   } else {
@@ -108,13 +120,26 @@ app.post("/test", (request, response) => {
       request.cookies.sqms,
       process.env.JWTSECRET
     );
-    console.log(customerData);
     response.json({
       sessionId: customerData.sessionId,
       signedIn: true,
     });
   }
 });
+
+//
+//Get Services route
+app.post("/get-services", async (request, response) => {
+  try {
+    const services = await fetchServices(request.body.branch);
+    response.json(services);
+  } catch (err) {
+    console.log(err);
+    response.json("Error Fetching Services");
+  }
+});
+
+//
 app.get("/get-branches", async (request, response) => {
   const branches = await fetchBranchesFromDB();
   response.json(branches);
@@ -124,4 +149,19 @@ app.get("/add-branch", async (request, response) => {
   await addBranch();
   response.json("Finished");
 });
+
+app.post("/get-sessions", async (request, response) => {
+  const { sessionId } = request.body;
+  const sessions = await getSessions();
+  response.json(sessions.find((session) => session?.sessionId == sessionId));
+});
+
+//
+//Join Queue request
+app.post("/join-queue", async(request, response)=>{
+  const { sessionId, queueId, branch, service } = request.body;
+
+  const joinQueue = await joinServiceQueue(sessionId,branch, service);
+  response.json(joinQueue);
+})
 app.listen(PORT, console.log("Listening on PORT ", PORT));

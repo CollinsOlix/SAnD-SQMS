@@ -1,45 +1,57 @@
+import { useContext } from "react";
 import "../styles/serviceCenter.css";
 import AddIcon from "@mui/icons-material/Add";
+import AppContext from "../includes/context";
 
-const QueuePicker = ({ index = 1 }) => {
-  return index < 1 ? (
+const QueuePicker = ({ index, item, active }) => {
+  const { customerBranchOption } = useContext(AppContext);
+  const joinQueue = async () => {
+    await fetch("/join-queue", {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }).then(response=>response.json());
+  };
+  return active ? (
     <div className="queue-container">
-      <h4>Operation 1</h4>
+      <h4>{item?.serviceName}</h4>
       <p style={{ fontWeight: "bold", fontSize: "1.3em" }}>
         Your Ticket Number
       </p>
       <p
         style={{
-          fontSize: "10em",
+          fontSize: "8em",
           fontWeight: "bold",
           fontFamily: "Inter",
           margin: "0",
         }}
       >
-        00
+        {item.serviceCurrentNumber}
       </p>
       <p style={{ fontWeight: "bold", fontSize: "1.3em" }}>
         There Are Currently
       </p>
       <p style={{ fontSize: "6em", fontWeight: "bold", fontFamily: "Inter" }}>
-        00
+        {item.peopleWaiting}
       </p>
       <p style={{ fontWeight: "bold", fontSize: "1.3em" }}>people waiting</p>
     </div>
   ) : (
     <div className="queue-container">
-      <h4>Operation {index}</h4>
+      <h4>{item?.serviceName}</h4>
       <p
         style={{
-          fontSize: "10em",
+          fontSize: "8em",
           fontWeight: "bold",
           fontFamily: "Inter",
           margin: "0",
         }}
       >
-        00
+        {item.serviceCurrentNumber}
       </p>
-      <div className="icon-container">
+      <div className="icon-container" onClick={joinQueue}>
         <AddIcon
           sx={{
             fontSize: 70,

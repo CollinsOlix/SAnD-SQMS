@@ -1,10 +1,17 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import React, {
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 
 import "../styles/home.css";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../config/firebase";
 import Board from "../components/Board";
 import { useNavigate } from "react-router";
+import AppContext from "../includes/context";
 
 function Home() {
   const navigate = useNavigate();
@@ -14,10 +21,14 @@ function Home() {
   const [firstName, setFirstName] = useState();
   const [customerNumber, setCustomerNumber] = useState();
   const [trials, setTrials] = useState(0);
-  const [customerBranchOption, setCustomerBranchOption] = useState();
   const [service, setService] = useState();
   const branchOptionsRef = useRef(null);
   const serviceOptionsRef = useRef(null);
+
+  //
+  //Context store
+  const { customerBranchOption, setCustomerBranchOption } =
+    useContext(AppContext);
 
   const getCustomerData = async (customerNumber, firstName) => {
     const docRef = doc(db, "customers", customerNumber);
@@ -36,6 +47,18 @@ function Home() {
       setErrorMessage("Invalid First Name or Customer Number");
       return "Invalid First Name or Customer Number";
     }
+  };
+  const getSessionData = async (id) => {
+    fetch("http://localhost:5000/get-sessions", {
+      method: "POST",
+      credentials: "include",
+      body: JSON.stringify({ sessionId: id }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+      .then((response) => response.json())
+      .then((data) => console.log("Session Data: ", data));
   };
 
   const fetchBranches = async () => {
@@ -56,7 +79,8 @@ function Home() {
       .then((response) => response.json())
       .then((data) => {
         if (data && data.signedIn) {
-          navigate(`sessions/${data.sessionId}`, {});
+          getSessionData(data.sessionId);
+          navigate(`sessions/${data.sessionId}`);
         }
       });
   };
@@ -88,6 +112,7 @@ function Home() {
   }, [customerBranchOption, availableBranches]);
 
   const submitUserData = async () => {
+    setCustomerBranchOption(branchOptionsRef.current.value);
     try {
       await fetch("http://localhost:5000", {
         method: "POST",
@@ -239,6 +264,7 @@ function Home() {
                       );
                       return;
                     }
+                    console.log("Making attempt");
                     setErrorMessage(null);
                     await submitUserData();
                   }}
