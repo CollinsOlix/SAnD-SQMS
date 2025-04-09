@@ -68,6 +68,23 @@ function Home() {
         setAvailableBranches(data);
       });
   };
+
+  const fetchServices = async (branch) => {
+    await fetch("http://localhost:5000/get-services", {
+      method: "POST",
+      credentials: "include",
+      body: JSON.stringify({ branch: branch }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("Avail Services: ", data);
+        setAvailableServices(data);
+        return data;
+      });
+  };
   const userHasSession = async () => {
     await fetch("http://localhost:5000/", {
       method: "GET",
@@ -93,23 +110,8 @@ function Home() {
     // getCustomerData("cust1", "test");
     setService(serviceOptionsRef.current?.value);
     setCustomerBranchOption(branchOptionsRef.current?.value);
+    fetchBranches(branchOptionsRef.current?.value);
   }, []);
-
-  useEffect(() => {
-    let dataa =
-      availableBranches &&
-      availableBranches
-        .find(
-          (aBranch) =>
-            aBranch.branchName === customerBranchOption ||
-            aBranch.branchName === branchOptionsRef.current.value
-        )
-        .availableServices.map((item) => [
-          item.serviceName,
-          item.serviceCurrentNumber,
-        ]);
-    availableBranches && setAvailableServices(dataa);
-  }, [customerBranchOption, availableBranches]);
 
   const submitUserData = async () => {
     setCustomerBranchOption(branchOptionsRef.current.value);
@@ -224,10 +226,15 @@ function Home() {
                 <select
                   ref={branchOptionsRef}
                   id="branchOptions"
-                  onChange={(e) => {
-                    setCustomerBranchOption(e.target.value);
+                  onChange={async (e) => {
+                    setCustomerBranchOption(branchOptionsRef.current.value);
+                    fetchServices(branchOptionsRef.current.value);
                   }}
+                  defaultValue="Select a branch"
                 >
+                  <option value="Select a branch" disabled>
+                    Select A Branch
+                  </option>
                   {availableBranches?.map((aBranch) => (
                     <option key={aBranch.branchID} value={aBranch.branchName}>
                       {aBranch.branchName}
@@ -247,11 +254,17 @@ function Home() {
                   }}
                 >
                   {availableServices &&
-                    availableServices.map((service) => (
-                      <option key={service[0]} value={service[0]}>
-                        {service[0]}
-                      </option>
-                    ))}
+                    availableServices.map((service) => {
+                      console.log(service);
+                      return (
+                        <option
+                          key={service.serviceName}
+                          value={service.serviceName}
+                        >
+                          {service.serviceName}
+                        </option>
+                      );
+                    })}
                 </select>
               </div>
 

@@ -12,14 +12,14 @@ import "./index.css";
 function BaseLayout() {
   const [customerBranchOption, setCustomerBranchOption] = useState();
   const [sessionDetails, setSessionDetails] = useState();
-  const [availableServicesInBranch, setAvailableServicesInBranch] = useState(
-    []
-  );
+  const [availableServicesInBranch, setAvailableServicesInBranch] = useState();
 
   return (
     <AppContext
       value={{
         customerBranchOption,
+        sessionDetails,
+        setSessionDetails,
         setCustomerBranchOption,
         sessionDetails,
         setSessionDetails,

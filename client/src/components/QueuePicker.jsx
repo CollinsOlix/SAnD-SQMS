@@ -4,19 +4,28 @@ import AddIcon from "@mui/icons-material/Add";
 import AppContext from "../includes/context";
 
 const QueuePicker = ({ index, item, active }) => {
-  const { customerBranchOption } = useContext(AppContext);
+  const { customerBranchOption, sessionDetails, setSessionDetails } =
+    useContext(AppContext);
+  // sessionId, queueId, branch, service;
   const joinQueue = async () => {
-    await fetch("/join-queue", {
+    await fetch("http://localhost:5000/join-queue", {
       method: "POST",
       credentials: "include",
+      body: JSON.stringify({
+        branch: customerBranchOption,
+        service: item.serviceName,
+        sessionId: sessionDetails.sessionId,
+      }),
       headers: {
         "Content-Type": "application/json",
       },
-    }).then(response=>response.json());
+    })
+      .then((response) => response.json())
+      .then((data) => setSessionDetails((e) => (e = data)));
   };
   return active ? (
-    <div className="queue-container">
-      <h4>{item?.serviceName}</h4>
+    <div className="queue-container-active">
+      <h3>{item?.serviceName}</h3>
       <p style={{ fontWeight: "bold", fontSize: "1.3em" }}>
         Your Ticket Number
       </p>
@@ -28,7 +37,7 @@ const QueuePicker = ({ index, item, active }) => {
           margin: "0",
         }}
       >
-        {item.serviceCurrentNumber}
+        {item.ticketNumber}
       </p>
       <p style={{ fontWeight: "bold", fontSize: "1.3em" }}>
         There Are Currently

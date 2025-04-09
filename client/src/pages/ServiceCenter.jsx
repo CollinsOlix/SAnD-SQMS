@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useLayoutEffect, useState } from "react";
 import BackDrop from "../components/BackDrop";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import QueuePicker from "../components/QueuePicker";
 import AppContext from "../includes/context";
 import { useParams } from "react-router";
@@ -9,8 +9,6 @@ function ServiceCenter() {
   const navigate = useNavigate();
   const { id } = useParams();
 
-  const [sessionDetails, setSessionDetails] = useState();
-
   //
   //Context store
   const {
@@ -18,13 +16,15 @@ function ServiceCenter() {
     availableServicesInBranch,
     setAvailableServicesInBranch,
     setCustomerBranchOption,
+    sessionDetails,
+    setSessionDetails,
   } = useContext(AppContext);
 
   //
   //Requesting for user logged in status
   const isUserLoggedIn = async () => {
     await fetch("http://localhost:5000/user", {
-      method: "POST",
+      method: "GET",
       credentials: "include",
       headers: {
         "Content-Type": "application/json",
@@ -32,7 +32,7 @@ function ServiceCenter() {
     })
       .then((response) => response.json())
       .then((data) => {
-        if (typeof data === "string") {
+        if (typeof data === "string" || !data?.signedIn) {
           navigate("/");
           return false;
         }
@@ -53,7 +53,8 @@ function ServiceCenter() {
     })
       .then((response) => response.json())
       .then((data) => {
-        setAvailableServicesInBranch(data);
+        setAvailableServicesInBranch((e) => (e = data));
+        console.log("ASiB: ", data);
       });
   };
 
@@ -90,99 +91,144 @@ function ServiceCenter() {
   }, [sessionDetails, availableServicesInBranch]);
 
   const { branchServices } = useContext(AppContext);
-  return (
-    <BackDrop>
-      <div
-        className="service-center"
-        style={{
-          padding: "0 22px",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
-          height: "100%",
-          width: "100%",
-        }}
-      >
-        <div style={{ display: "flex" }}>
-          <select
-            disabled={true}
-            defaultValue={customerBranchOption || sessionDetails?.branch}
-            style={{
-              flex: 2,
-              padding: "7px",
-              borderRadius: "5px",
-              border: "none",
-              fontSize: "larger",
-              boxShadow: "1px 1px 3px black",
-            }}
-            contentEditable={false}
-          >
-            <option value="1">
-              {customerBranchOption || sessionDetails?.branch}
-            </option>
-          </select>
-          <div style={{ flex: 4, textAlign: "right" }}>
-            <h1 style={{ color: "white", textShadow: "1px 1px 3px black" }}>
-              Hello, Collins
-            </h1>
-          </div>
-        </div>
+
+  if (sessionDetails === "Session not found") {
+    return (
+      <BackDrop>
         <div
+          className="service-center"
           style={{
-            flex: 1,
+            padding: "0 22px",
             display: "flex",
             flexDirection: "column",
-            marginTop: "3em",
+            justifyContent: "space-between",
+            height: "100%",
+            width: "100%",
           }}
         >
-          <h3>Services currently offered at this branch</h3>
-
+          <div>
+            <h2>Session not Found</h2>
+            <p>Session information is wrong or has expired.</p>
+            <Link to={"/"}>Return to Homepage</Link>
+          </div>
+        </div>
+      </BackDrop>
+    );
+  } else
+    return (
+      <BackDrop>
+        <div
+          className="service-center"
+          style={{
+            padding: "0 22px",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            height: "100%",
+            width: "100%",
+          }}
+        >
+          <div style={{ display: "flex" }}>
+            <select
+              disabled={true}
+              defaultValue={customerBranchOption || sessionDetails?.branch}
+              style={{
+                flex: 2,
+                padding: "7px",
+                borderRadius: "5px",
+                border: "none",
+                fontSize: "larger",
+                boxShadow: "1px 1px 3px black",
+              }}
+              contentEditable={false}
+            >
+              <option value="1">
+                {customerBranchOption || sessionDetails?.branch}
+              </option>
+            </select>
+            <div style={{ flex: 4, textAlign: "right" }}>
+              <h1 style={{ color: "white", textShadow: "1px 1px 3px black" }}>
+                Hello, {sessionDetails?.customerDetails.firstName}
+              </h1>
+            </div>
+          </div>
           <div
             style={{
               flex: 1,
-              display: "grid",
-              marginTop: "2em",
-              gap: "2rem",
-              overflow: "hidden scroll",
-              gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-              maxHeight: "450px",
-              // gridTemplateColumns: "1fr 1fr 1fr 1fr",
+              display: "flex",
+              flexDirection: "column",
+              marginTop: "3em",
+              justifyContent: "end",
             }}
           >
-            {sessionDetails &&
-              sessionDetails?.service.map((item, index) => (
-                <QueuePicker
-                  active={true}
-                  index={index}
-                  key={index}
-                  item={{
-                    serviceName: item.serviceToJoin,
-                    serviceCurrentNumber: item.lastQueueNumber + 1,
-                    peopleWaiting:
-                      item.lastQueueNumber +
-                        1 -
-                        availableServicesInBranch.find(
-                          (it) => it.serviceName === item.serviceName
-                        )?.serviceCurrentNumber || 0,
-                  }}
-                />
-              ))}
-            {availableServicesInBranch.map((item, index) => {
-              if (
-                !(
-                  sessionDetails &&
-                  sessionDetails.service.some(
-                    (it) => it.serviceName === item.serviceName
+            <h3>Services currently offered at this branch</h3>
+
+            <div
+              style={{
+                position: "relative",
+                zIndex: 1,
+                bottom: 0,
+                flex: 1,
+                display: "grid",
+                marginTop: "2em",
+                gap: "2rem",
+                overflow: "hidden scroll",
+                gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+                maxHeight: "450px",
+                // gridTemplateColumns: "1fr 1fr 1fr 1fr",
+              }}
+            >
+              {sessionDetails &&
+                sessionDetails?.service.map((item, index) => {
+                  return (
+                    <QueuePicker
+                      active={true}
+                      index={index}
+                      key={index}
+                      item={{
+                        serviceName: item.serviceName,
+                        ticketNumber: item.ticketNumber,
+                        serviceCurrentNumber:
+                          (availableServicesInBranch &&
+                            availableServicesInBranch.find(
+                              (service) =>
+                                service?.serviceName === item.serviceName
+                            ).serviceCurrentNumber) ||
+                          0,
+                        peopleWaiting:
+                          (availableServicesInBranch &&
+                            availableServicesInBranch.find(
+                              (service) =>
+                                service.serviceName === item.serviceName
+                            ).lastQueueNumber -
+                              availableServicesInBranch.find(
+                                (service) =>
+                                  service.serviceName === item.serviceName
+                              ).serviceCurrentNumber) ||
+                          0,
+                      }}
+                    />
+                  );
+                })}
+              {availableServicesInBranch &&
+                availableServicesInBranch.map((item, index) => {
+                  if (
+                    !(
+                      sessionDetails &&
+                      sessionDetails.service.some(
+                        (it) => it.serviceName === item.serviceName
+                      )
+                    )
                   )
-                )
-              )
-                return <QueuePicker index={index} key={index} item={item} />;
-            })}
+                    return (
+                      <QueuePicker index={index} key={index} item={item} />
+                    );
+                })}
+            </div>
           </div>
         </div>
-      </div>
-    </BackDrop>
-  );
+      </BackDrop>
+    );
 }
 
 export default ServiceCenter;

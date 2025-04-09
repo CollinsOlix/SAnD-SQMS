@@ -31,9 +31,18 @@ const getCustomerData = async (customerNumber, firstName) => {
 };
 
 const fetchServices = async (branch) => {
-  const servicesRef = doc(db, "Organizations", "Apex Bank", "branches", branch);
-  const querySnapshot = await getDoc(servicesRef);
-  return querySnapshot.data().availableServices;
+  const servicesRef = collection(
+    db,
+    "Organizations",
+    "Apex Bank",
+    "branches",
+    branch,
+    "availableServices"
+  );
+  const querySnapshot = await getDocs(servicesRef);
+  let allDocs = [];
+  allDocs = querySnapshot.docs.map((doc) => doc.data());
+  return allDocs;
 };
 
 const fetchBranchesFromDB = async () => {
@@ -84,38 +93,80 @@ const generateSessionId = async () => {
   return newSessionId;
 };
 
-const updateServiceQueueNumber = async (branch, index) => {
-  const serviceToUpdate = await getDoc(
-    doc(db, "Organizations", "Apex Bank", "branches", branch)
-  );
+const testUpdate = async () => {
   await setDoc(
-    doc(db, "Organizations", "Apex Bank", "branches", branch),
+    doc(db, "Organizations", "Apex Bank", "branches", "Apex Bank ( Girne )"),
     {
-      availableServices: [
-        {
-          serviceName: "Account and Card Issues",
-          lastQueueNumber:
-            serviceToUpdate.data().availableServices[index].lastQueueNumber + 1,
-        },
-      ],
+      "availableServices[1]": {
+        serviceName: "Withdrawals",
+        lastQueueNumber: 200,
+        serviceCurrentNumber: 130,
+      },
+    }
+  );
+};
+
+const updateServiceQueueNumber = async (branch, service) => {
+  let docReff = doc(
+    db,
+    "Organizations",
+    "Apex Bank",
+    "branches",
+    branch,
+    "availableServices",
+    service
+  );
+  const serviceToUpdate = await getDoc(docReff);
+  await setDoc(
+    docReff,
+    {
+      lastQueueNumber: serviceToUpdate.data().lastQueueNumber + 1,
     },
     { merge: true }
   );
-  const updatedService = await getDoc(
-    doc(db, "Organizations", "Apex Bank", "branches", branch)
-  );
+  const updatedService = await getDoc(docReff);
   return {
-    orig: serviceToUpdate.data().availableServices[index],
-    final: updatedService.data().availableServices[index],
+    orig: serviceToUpdate.data(),
+    final: updatedService.data(),
   };
 };
 
-const createNewSession = async (customerNumber, branch, service) => {
+const setBranchDefaultValues = async (branch, title) => {
+  const branchRef = doc(
+    db,
+    "Organizations",
+    "Apex Bank",
+    "branches",
+    branch,
+    "availableServices",
+    title
+  );
+  await setDoc(branchRef, {
+    serviceName: "Account and Card Issues",
+    lastQueueNumber: 1,
+    serviceCurrentNumber: 0,
+  });
+
+  const branchData = await getDoc(branchRef);
+  return branchData.data();
+};
+
+const createNewSession = async (
+  customerNumber,
+  branch,
+  service,
+  customerDetails
+) => {
   const newSessionId = await generateSessionId();
   const serviceToJoin = await fetchServices(branch);
   let serviceItem = serviceToJoin.find(
     (availService) => availService.serviceName === service
   );
+
+  serviceItem = {
+    ...serviceItem,
+    ticketNumber: serviceItem.lastQueueNumber + 1,
+  };
 
   const indexxer = serviceToJoin.findIndex(
     (availService) => availService.serviceName === service
@@ -124,7 +175,7 @@ const createNewSession = async (customerNumber, branch, service) => {
   console.log("Indexxer: ", indexxer);
 
   try {
-    await updateServiceQueueNumber(branch, indexxer);
+    await updateServiceQueueNumber(branch, service);
     await setDoc(
       doc(db, "Organizations", "Apex Bank", "sessions", newSessionId),
       {
@@ -133,6 +184,7 @@ const createNewSession = async (customerNumber, branch, service) => {
         customerNumber,
         sessionId: newSessionId,
         date: Timestamp.now(),
+        customerDetails,
       }
     );
   } catch (error) {
@@ -142,35 +194,46 @@ const createNewSession = async (customerNumber, branch, service) => {
   return newSessionId;
 };
 
-const joinServiceQueue = async (sessionId, branch, serviceName) => {
+const joinServiceQueue = async (sessionId, branch, service) => {
   try {
     const queueData = await getDoc(
-      doc(db, "Organizations", "Apex Bank", "branches", branch)
+      doc(
+        db,
+        "Organizations",
+        "Apex Bank",
+        "branches",
+        branch,
+        "availableServices",
+        service
+      )
     );
-    const queue = queueData
-      .data()
-      .availableServices.find((item) => item.serviceName == serviceName);
-    const queueIndex = queueData
-      .data()
-      .availableServices.findIndex((item) => item.serviceName == serviceName);
+
     let sessionData = await getDoc(
       doc(db, "Organizations", "Apex Bank", "sessions", sessionId)
     );
+
+    let updatedService = await updateServiceQueueNumber(branch, service);
+    updatedService = updatedService.final;
+
+    let newService = sessionData.data().service;
+    newService.push({
+      serviceName: service,
+      ticketNumber: updatedService.lastQueueNumber,
+      serviceCurrentNumber: updatedService.serviceCurrentNumber,
+    });
+
     const sessionDoc = await setDoc(
       doc(db, "Organizations", "Apex Bank", "sessions", sessionId),
       {
-        service: sessionData.data().service.push({
-          serviceName,
-          lastQueueNumber: queue.lastQueueNumber,
-        }),
+        service: newService,
       },
       { merge: true }
     );
-    await updateServiceQueueNumber(branch, queueIndex);
     sessionData = await getDoc(
       doc(db, "Organizations", "Apex Bank", "sessions", sessionId)
     );
-    return sessionData;
+    console.log("Session Data: ", sessionData.data());
+    return sessionData.data();
   } catch (err) {
     console.error(err);
   }
@@ -185,4 +248,6 @@ module.exports = {
   createNewSession,
   updateServiceQueueNumber,
   joinServiceQueue,
+  testUpdate,
+  setBranchDefaultValues,
 };
