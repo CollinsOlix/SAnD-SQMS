@@ -1,7 +1,23 @@
-import React from "react";
-import { NavLink } from "react-router";
+import React, { useContext } from "react";
+import { NavLink, useNavigate } from "react-router";
+import AppContext from "../includes/context";
 
 function BackDrop({ children, showNavTabs }) {
+  const { staffDetails, SERVER_URL } = useContext(AppContext);
+  const navigate = useNavigate();
+
+  const logOut = async () => {
+    try {
+      await fetch(`${SERVER_URL}/staff/logout`, {
+        method: "GET",
+        credentials: "include",
+      }).then(() => {
+        navigate("/staff");
+      });
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
+  };
   return (
     <div className="backdrop">
       <nav>
@@ -9,11 +25,19 @@ function BackDrop({ children, showNavTabs }) {
         {showNavTabs && (
           <div className="navLinks">
             <NavLink to="/">Home</NavLink>
-            <NavLink to="/staff-sign-in">Staff Login</NavLink>
+            {staffDetails ? (
+              <button style={{ display: "inline" }} onClick={logOut}>
+                Log Out
+              </button>
+            ) : (
+              <NavLink to="/staff">Staff Login</NavLink>
+            )}
           </div>
         )}
       </nav>
-      <div style={{ flex: 1 }}>{children}</div>
+      <div style={{ flex: 1, maxHeight: "100%", overflow: "hidden" }}>
+        {children}
+      </div>
     </div>
   );
 }

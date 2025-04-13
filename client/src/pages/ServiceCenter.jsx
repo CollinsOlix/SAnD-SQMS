@@ -1,9 +1,10 @@
-import React, { useContext, useEffect, useLayoutEffect, useState } from "react";
+import React, { useCallback, useContext, useLayoutEffect } from "react";
 import BackDrop from "../components/BackDrop";
 import { Link, useNavigate } from "react-router";
 import QueuePicker from "../components/QueuePicker";
 import AppContext from "../includes/context";
 import { useParams } from "react-router";
+import "../styles/serviceCenter.css";
 
 function ServiceCenter() {
   const navigate = useNavigate();
@@ -18,12 +19,13 @@ function ServiceCenter() {
     setCustomerBranchOption,
     sessionDetails,
     setSessionDetails,
+    SERVER_URL,
   } = useContext(AppContext);
 
   //
   //Requesting for user logged in status
-  const isUserLoggedIn = async () => {
-    await fetch("http://localhost:5000/user", {
+  const isUserLoggedIn = useCallback(async () => {
+    await fetch(`${SERVER_URL}/user`, {
       method: "GET",
       credentials: "include",
       headers: {
@@ -38,30 +40,32 @@ function ServiceCenter() {
         }
         return data;
       });
-  };
+  }, [SERVER_URL, navigate]);
 
   //
   //request to fetch services and queue numbers
-  const fetchServices = async (branch) => {
-    await fetch("http://localhost:5000/get-services", {
-      method: "POST",
-      credentials: "include",
-      body: JSON.stringify({ branch: branch }),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        setAvailableServicesInBranch((e) => (e = data));
-        console.log("ASiB: ", data);
-      });
-  };
+  const fetchServices = useCallback(
+    async (branch) => {
+      await fetch(`${SERVER_URL}/get-services`, {
+        method: "POST",
+        credentials: "include",
+        body: JSON.stringify({ branch: branch }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          setAvailableServicesInBranch((e) => (e = data));
+        });
+    },
+    [SERVER_URL, setAvailableServicesInBranch]
+  );
 
   //
   //request to fetch session data
-  const getSessionData = async () => {
-    await fetch("http://localhost:5000/get-sessions", {
+  const getSessionData = useCallback(async () => {
+    await fetch(`${SERVER_URL}/get-sessions`, {
       method: "POST",
       credentials: "include",
       body: JSON.stringify({ sessionId: id }),
@@ -71,41 +75,30 @@ function ServiceCenter() {
     })
       .then((response) => response.json())
       .then((data) => {
-        console.log("Data: ", data);
         setSessionDetails((e) => (e = data));
         setCustomerBranchOption(data.branch);
         // setSessionDetails(data.service);
         fetchServices(data.branch);
         return data;
       });
-  };
+  }, [
+    SERVER_URL,
+    id,
+    setCustomerBranchOption,
+    setSessionDetails,
+    fetchServices,
+  ]);
   useLayoutEffect(() => {
+    console.log("Repainting");
     if (isUserLoggedIn()) {
       getSessionData();
     }
-  }, []);
-
-  useEffect(() => {
-    console.log("Session Details: ", sessionDetails);
-    console.log("Availa: ", availableServicesInBranch);
-  }, [sessionDetails, availableServicesInBranch]);
-
-  const { branchServices } = useContext(AppContext);
+  }, [getSessionData, isUserLoggedIn]);
 
   if (sessionDetails === "Session not found") {
     return (
       <BackDrop>
-        <div
-          className="service-center"
-          style={{
-            padding: "0 22px",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            height: "100%",
-            width: "100%",
-          }}
-        >
+        <div className="service-center-container">
           <div>
             <h2>Session not Found</h2>
             <p>Session information is wrong or has expired.</p>
@@ -117,29 +110,12 @@ function ServiceCenter() {
   } else
     return (
       <BackDrop>
-        <div
-          className="service-center"
-          style={{
-            padding: "0 22px",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            height: "100%",
-            width: "100%",
-          }}
-        >
+        <div className="service-center-container">
           <div style={{ display: "flex" }}>
             <select
               disabled={true}
               defaultValue={customerBranchOption || sessionDetails?.branch}
-              style={{
-                flex: 2,
-                padding: "7px",
-                borderRadius: "5px",
-                border: "none",
-                fontSize: "larger",
-                boxShadow: "1px 1px 3px black",
-              }}
+              className="select-branch"
               contentEditable={false}
             >
               <option value="1">
@@ -184,7 +160,7 @@ function ServiceCenter() {
                     <QueuePicker
                       active={true}
                       index={index}
-                      key={index}
+                      key={index + "active"}
                       item={{
                         serviceName: item.serviceName,
                         ticketNumber: item.ticketNumber,
@@ -219,10 +195,13 @@ function ServiceCenter() {
                         (it) => it.serviceName === item.serviceName
                       )
                     )
-                  )
+                  ) {
                     return (
                       <QueuePicker index={index} key={index} item={item} />
                     );
+                  } else {
+                    return <></>;
+                  }
                 })}
             </div>
           </div>

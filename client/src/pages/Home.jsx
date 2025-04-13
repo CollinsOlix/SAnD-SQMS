@@ -1,4 +1,5 @@
 import React, {
+  useCallback,
   useContext,
   useEffect,
   useLayoutEffect,
@@ -7,8 +8,6 @@ import React, {
 } from "react";
 
 import "../styles/home.css";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "../config/firebase";
 import Board from "../components/Board";
 import { useNavigate } from "react-router";
 import AppContext from "../includes/context";
@@ -27,50 +26,34 @@ function Home() {
 
   //
   //Context store
-  const { customerBranchOption, setCustomerBranchOption } =
-    useContext(AppContext);
+  const { setCustomerBranchOption, SERVER_URL } = useContext(AppContext);
 
-  const getCustomerData = async (customerNumber, firstName) => {
-    const docRef = doc(db, "customers", customerNumber);
-    const docSnap = await getDoc(docRef);
+  const getSessionData = useCallback(
+    async (id) => {
+      fetch(`${SERVER_URL}/get-sessions`, {
+        method: "POST",
+        credentials: "include",
+        body: JSON.stringify({ sessionId: id }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => console.log("Session Data: ", data));
+    },
+    [SERVER_URL]
+  );
 
-    if (docSnap.exists()) {
-      if (docSnap.data().firstName === firstName) {
-        return docSnap.data();
-      } else {
-        setErrorMessage("Invalid First Name or Customer Number");
-        setTrials((trial) => trial + 1);
-        return "Invalid First Name or Customer Number";
-      }
-    } else {
-      setTrials((trial) => trial + 1);
-      setErrorMessage("Invalid First Name or Customer Number");
-      return "Invalid First Name or Customer Number";
-    }
-  };
-  const getSessionData = async (id) => {
-    fetch("http://localhost:5000/get-sessions", {
-      method: "POST",
-      credentials: "include",
-      body: JSON.stringify({ sessionId: id }),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
-      .then((response) => response.json())
-      .then((data) => console.log("Session Data: ", data));
-  };
-
-  const fetchBranches = async () => {
-    await fetch("http://localhost:5000/get-branches")
+  const fetchBranches = useCallback(async () => {
+    await fetch(`${SERVER_URL}/get-branches`)
       .then((response) => response.json())
       .then((data) => {
         setAvailableBranches(data);
       });
-  };
+  }, [SERVER_URL]);
 
   const fetchServices = async (branch) => {
-    await fetch("http://localhost:5000/get-services", {
+    await fetch(`${SERVER_URL}/get-services`, {
       method: "POST",
       credentials: "include",
       body: JSON.stringify({ branch: branch }),
@@ -85,8 +68,8 @@ function Home() {
         return data;
       });
   };
-  const userHasSession = async () => {
-    await fetch("http://localhost:5000/", {
+  const userHasSession = useCallback(async () => {
+    await fetch(`${SERVER_URL}/`, {
       method: "GET",
       credentials: "include",
       headers: {
@@ -100,23 +83,23 @@ function Home() {
           navigate(`sessions/${data.sessionId}`);
         }
       });
-  };
+  }, [SERVER_URL, navigate, getSessionData]);
   useLayoutEffect(() => {
     userHasSession();
     fetchBranches();
-  }, []);
+  }, [fetchBranches, userHasSession]);
 
   useEffect(() => {
     // getCustomerData("cust1", "test");
     setService(serviceOptionsRef.current?.value);
     setCustomerBranchOption(branchOptionsRef.current?.value);
     fetchBranches(branchOptionsRef.current?.value);
-  }, []);
+  }, [fetchBranches, setCustomerBranchOption]);
 
   const submitUserData = async () => {
     setCustomerBranchOption(branchOptionsRef.current.value);
     try {
-      await fetch("http://localhost:5000", {
+      await fetch(`${SERVER_URL}`, {
         method: "POST",
         credentials: "include",
         headers: {

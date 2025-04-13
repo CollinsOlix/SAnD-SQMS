@@ -4,6 +4,7 @@ const app = express();
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
+require("./routes/staffRoute")(app);
 const {
   getCustomerData,
   fetchBranchesFromDB,
@@ -11,10 +12,8 @@ const {
   getSessions,
   createNewSession,
   fetchServices,
-  updateServiceQueueNumber,
   joinServiceQueue,
   testUpdate,
-  setBranchDefaultValues,
 } = require("./config/firestoreFunctions");
 const PORT = 5000;
 
@@ -91,7 +90,6 @@ app.post("/", async (request, response) => {
         maxAge: Math.floor(Date.now() / 1000) + 60 * 60 * 24,
         httpOnly: true,
         sameSite: "strict",
-
         secure: true,
       });
 
@@ -114,11 +112,21 @@ app.get("/updateService", async (request, response) => {
 
 app.get("/", (request, response) => {
   if (request.cookies?.sqms) {
-    const userData = jwt.verify(request.cookies.sqms, process.env.JWTSECRET);
-    console.log("User Data: ", userData);
+    try {
+      const userData = jwt.verify(request.cookies.sqms, process.env.JWTSECRET);
+      console.log("User Data: ", userData);
+      response.json({
+        signedIn: true,
+        sessionId: userData.sessionId,
+      });
+    } catch (err) {
+      response.clearCookie("sqms").json({
+        signedIn: false,
+      });
+    }
+  } else {
     response.json({
-      signedIn: true,
-      sessionId: userData.sessionId,
+      signedIn: false,
     });
   }
 });

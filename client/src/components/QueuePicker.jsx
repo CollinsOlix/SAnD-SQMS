@@ -4,11 +4,15 @@ import AddIcon from "@mui/icons-material/Add";
 import AppContext from "../includes/context";
 
 const QueuePicker = ({ index, item, active }) => {
-  const { customerBranchOption, sessionDetails, setSessionDetails } =
-    useContext(AppContext);
+  const {
+    customerBranchOption,
+    sessionDetails,
+    setSessionDetails,
+    SERVER_URL,
+  } = useContext(AppContext);
   // sessionId, queueId, branch, service;
   const joinQueue = async () => {
-    await fetch("http://localhost:5000/join-queue", {
+    await fetch(`${SERVER_URL}/join-queue`, {
       method: "POST",
       credentials: "include",
       body: JSON.stringify({

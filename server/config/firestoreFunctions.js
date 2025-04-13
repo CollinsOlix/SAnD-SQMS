@@ -30,6 +30,25 @@ const getCustomerData = async (customerNumber, firstName) => {
   }
 };
 
+//
+//Gets Staff data from the database or returns null if not found
+const getStaffData = async (staffId, password) => {
+  const docRef = doc(db, "Organizations", "Apex Bank", "staff", staffId);
+  const docSnap = await getDoc(docRef);
+  if (docSnap.exists()) {
+    console.log("Document data:", docSnap.data());
+    if (docSnap.data().password === password) {
+      return docSnap.data();
+    } else {
+      return null;
+    }
+  } else {
+    return null;
+  }
+};
+
+//
+// Fetches all available services for a specific branch
 const fetchServices = async (branch) => {
   const servicesRef = collection(
     db,
@@ -238,6 +257,31 @@ const joinServiceQueue = async (sessionId, branch, service) => {
     console.error(err);
   }
 };
+
+const getServiceDetails = async (branch, service) => {
+  try {
+    const serviceRef = doc(
+      db,
+      "Organizations",
+      "Apex Bank",
+      "branches",
+      branch,
+      "availableServices",
+      service
+    );
+    const serviceDoc = await getDoc(serviceRef);
+    return serviceDoc.data();
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+const getWaitingCustomers = async () => {
+  try {
+  } catch (err) {
+    console.error(err);
+  }
+};
 module.exports = {
   getCustomerData,
   fetchBranchesFromDB,
@@ -250,4 +294,6 @@ module.exports = {
   joinServiceQueue,
   testUpdate,
   setBranchDefaultValues,
+  getStaffData,
+  getServiceDetails,
 };

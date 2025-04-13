@@ -16,6 +16,9 @@
   p {
     line-height: 1;
   }
+  h3 {
+    color: #fff;
+  }
 }
 .queue-container-active {
   height: 400px;
@@ -31,6 +34,9 @@
   p {
     line-height: 1;
   }
+  h3 {
+    color: #3a72da;
+  }
 }
 .icon-container {
   padding: 0.3em;
@@ -45,4 +51,27 @@
 
 h4 {
   font-size: larger;
+}
+
+.service-center-container {
+  padding: 0 22px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  width: 100%;
+}
+
+.select-branch {
+  flex: 2;
+  padding: 7px;
+  border-radius: 5px;
+  border: none;
+  font-size: larger;
+  box-shadow: 1px 1px 3px black;
+}
+h3 {
+  font-size: x-large;
+  margin: 0;
+  color: #fff;
 }
