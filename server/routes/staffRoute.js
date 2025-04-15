@@ -6,6 +6,9 @@ const jwt = require("jsonwebtoken");
 const {
   getStaffData,
   getServiceDetails,
+  getWaitingCustomers,
+  addSessionToHistory,
+  getDailyHistory,
 } = require("../config/firestoreFunctions");
 
 module.exports = function (app) {
@@ -78,9 +81,7 @@ module.exports = function (app) {
   });
 
   app.get("/staff/logout", (request, response) => {
-    console.log("Logging out");
     if (request.cookies.staffToken) {
-      console.log("clearing cookie");
       response.clearCookie("staffToken").json({ staffSignedIn: false });
     } else {
       response.json({ staffSignedIn: false });
@@ -88,9 +89,43 @@ module.exports = function (app) {
   });
 
   app.post("/staff/get-service-details", async (request, response) => {
-    console.log(request.body);
     const { branch, service } = request.body;
     let serviceDetails = await getServiceDetails(branch, service);
     response.json(serviceDetails);
+  });
+
+  app.post("/staff/get-waiting-customers", async (request, response) => {
+    const { branch } = request.body;
+    let data = await getWaitingCustomers(branch);
+    response.json(data);
+  });
+
+  app.post("/staff/get-next-customer", async (request, response) => {
+    const { branch, service, customerDetails, handledBy, serviceDuration } =
+      request.body;
+
+    let data = await addSessionToHistory(
+      branch,
+      service,
+      customerDetails,
+      handledBy,
+      serviceDuration
+    );
+    response.json(data);
+  });
+
+  //
+  //get daily history route
+  app.post("/staff/get-daily-history", async (request, response) => {
+    const { branch, service } = request.body;
+    let history = await getDailyHistory(branch, service);
+    response.json(history);
+  });
+
+  //
+  //random route for testing
+  app.get("/staff/test", async (request, response) => {
+    let data = await getWaitingCustomers("Apex Bank ( Girne )");
+    response.json(data);
   });
 };

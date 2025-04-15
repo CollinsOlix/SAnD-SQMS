@@ -5,10 +5,20 @@ const {
   collection,
   setDoc,
   Timestamp,
+  query,
+  where,
+  addDoc,
+  orderBy,
 } = require("firebase/firestore");
 const { db } = require("./firebase");
 
 const { v4: uuidv4 } = require("uuid");
+
+const getToday = () => {
+  let today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return today;
+};
 
 const getCustomerData = async (customerNumber, firstName) => {
   const docRef = doc(
@@ -36,7 +46,6 @@ const getStaffData = async (staffId, password) => {
   const docRef = doc(db, "Organizations", "Apex Bank", "staff", staffId);
   const docSnap = await getDoc(docRef);
   if (docSnap.exists()) {
-    console.log("Document data:", docSnap.data());
     if (docSnap.data().password === password) {
       return docSnap.data();
     } else {
@@ -150,6 +159,64 @@ const updateServiceQueueNumber = async (branch, service) => {
   };
 };
 
+const getDailyHistory = async (branch, service) => {
+  const historyRef = collection(
+    db,
+    "Organizations",
+    "Apex Bank",
+    "branches",
+    branch,
+    "history"
+  );
+  const q = query(
+    historyRef,
+    where("service", "==", service),
+    where("date", ">", getToday()),
+    orderBy("date", "desc")
+  );
+  try {
+    let history = await getDocs(q)
+      .then((querySnapshot) => {
+        let dailyHistory = [];
+        querySnapshot.forEach((doc) => {
+          dailyHistory.push(doc.data());
+        });
+        return dailyHistory;
+      })
+      .catch((err) => {
+        console.error(err);
+        return [];
+      });
+    return history;
+  } catch (err) {
+    console.error("Daily History Error", err);
+  }
+};
+
+const incrementServiceQueueNumber = async (branch, service) => {
+  let docReff = doc(
+    db,
+    "Organizations",
+    "Apex Bank",
+    "branches",
+    branch,
+    "availableServices",
+    service
+  );
+  const serviceToUpdate = await getDoc(docReff);
+  await setDoc(
+    docReff,
+    {
+      serviceCurrentNumber:
+        serviceToUpdate.data().serviceCurrentNumber >=
+        serviceToUpdate.data().lastQueueNumber
+          ? serviceToUpdate.data().lastQueueNumber
+          : serviceToUpdate.data().serviceCurrentNumber + 1,
+    },
+    { merge: true }
+  );
+};
+
 const setBranchDefaultValues = async (branch, title) => {
   const branchRef = doc(
     db,
@@ -186,20 +253,13 @@ const createNewSession = async (
     ...serviceItem,
     ticketNumber: serviceItem.lastQueueNumber + 1,
   };
-
-  const indexxer = serviceToJoin.findIndex(
-    (availService) => availService.serviceName === service
-  );
-
-  console.log("Indexxer: ", indexxer);
-
   try {
     await updateServiceQueueNumber(branch, service);
     await setDoc(
       doc(db, "Organizations", "Apex Bank", "sessions", newSessionId),
       {
         branch,
-        service: [serviceItem],
+        service: { [serviceItem.serviceName]: serviceItem },
         customerNumber,
         sessionId: newSessionId,
         date: Timestamp.now(),
@@ -235,11 +295,11 @@ const joinServiceQueue = async (sessionId, branch, service) => {
     updatedService = updatedService.final;
 
     let newService = sessionData.data().service;
-    newService.push({
+    newService[service] = {
       serviceName: service,
       ticketNumber: updatedService.lastQueueNumber,
       serviceCurrentNumber: updatedService.serviceCurrentNumber,
-    });
+    };
 
     const sessionDoc = await setDoc(
       doc(db, "Organizations", "Apex Bank", "sessions", sessionId),
@@ -251,7 +311,6 @@ const joinServiceQueue = async (sessionId, branch, service) => {
     sessionData = await getDoc(
       doc(db, "Organizations", "Apex Bank", "sessions", sessionId)
     );
-    console.log("Session Data: ", sessionData.data());
     return sessionData.data();
   } catch (err) {
     console.error(err);
@@ -276,24 +335,73 @@ const getServiceDetails = async (branch, service) => {
   }
 };
 
-const getWaitingCustomers = async () => {
+const getWaitingCustomers = async (branch) => {
+  const q = query(
+    collection(db, "Organizations", "Apex Bank", "sessions"),
+    where("date", ">", getToday()),
+    where("branch", "==", branch)
+  );
   try {
+    const waitingCustomersRef = await getDocs(q);
+    const waitingCustomers = [];
+    waitingCustomersRef.forEach((doc) => {
+      waitingCustomers.push(doc.data());
+    });
+    return waitingCustomers;
   } catch (err) {
     console.error(err);
+    return null;
+  }
+};
+
+const addSessionToHistory = async (
+  branch,
+  service,
+  customerDetails,
+  handledBy,
+  serviceDuration
+) => {
+  const historyRef = collection(
+    db,
+    "Organizations",
+    "Apex Bank",
+    "branches",
+    branch,
+    "history"
+  );
+  try {
+    await addDoc(historyRef, {
+      branch,
+      service,
+      customerDetails,
+      handledBy,
+      serviceDuration,
+      date: Timestamp.now(),
+    });
+
+    await incrementServiceQueueNumber(branch, service);
+    let history = await getDailyHistory(branch, service);
+    return history;
+  } catch (err) {
+    console.error("Add Error: ", err);
+    return null;
   }
 };
 module.exports = {
-  getCustomerData,
-  fetchBranchesFromDB,
   addBranch,
-  getSessions,
-  generateSessionId,
-  fetchServices,
-  createNewSession,
-  updateServiceQueueNumber,
-  joinServiceQueue,
   testUpdate,
-  setBranchDefaultValues,
+  getSessions,
   getStaffData,
+  fetchServices,
+  getCustomerData,
+  getDailyHistory,
+  joinServiceQueue,
+  createNewSession,
   getServiceDetails,
+  generateSessionId,
+  getWaitingCustomers,
+  fetchBranchesFromDB,
+  addSessionToHistory,
+  setBranchDefaultValues,
+  updateServiceQueueNumber,
 };

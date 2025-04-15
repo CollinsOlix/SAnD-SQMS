@@ -114,7 +114,6 @@ app.get("/", (request, response) => {
   if (request.cookies?.sqms) {
     try {
       const userData = jwt.verify(request.cookies.sqms, process.env.JWTSECRET);
-      console.log("User Data: ", userData);
       response.json({
         signedIn: true,
         sessionId: userData.sessionId,
@@ -159,7 +158,6 @@ app.get("/user", (request, response) => {
 app.post("/get-services", async (request, response) => {
   try {
     const services = await fetchServices(request.body.branch);
-    console.log(services);
     response.json(services);
   } catch (err) {
     console.log(err);
@@ -193,7 +191,6 @@ app.post("/get-sessions", async (request, response) => {
 //Join Queue request
 app.post("/join-queue", async (request, response) => {
   const { sessionId, branch, service } = request.body;
-  console.log("Recieving:");
   const joinQueue = await joinServiceQueue(sessionId, branch, service);
   response.json(joinQueue);
 });

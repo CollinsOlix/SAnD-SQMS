@@ -27,7 +27,7 @@
     color: #3a72da;
   }
   .timerText {
-    font-size: 3.5em;
+    font-size: 3em;
     font-weight: 600;
     color: #3a72da;
   }
@@ -47,14 +47,19 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  
+
   .dailyHistory {
     width: 100%;
     text-align: center;
     background-color: #3a72da;
     color: #fff;
     border-radius: 0.7em;
-    padding: 0.8em 0;
+    display: flex;
+    justify-content: space-between;
+    padding: 0.4em;
+    .printBtn {
+      width: fit-content;
+    }
   }
   h1 {
     font-size: 2.5em;
@@ -76,14 +81,18 @@
   }
   button {
     outline: none;
-    border: none;
+    border: 2px solid #fff;
     font-size: 2em;
-    margin: 0;
-    padding: 0.5em;
+    margin: 0 0.3em;
+    padding: 0 0.5em;
   }
 
   button:hover {
     background-color: #fff;
     color: #3a72da;
+  }
+  .bottom {
+    background-color: #3a72da00;
+    padding: 0;
   }
 }

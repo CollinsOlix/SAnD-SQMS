@@ -155,31 +155,34 @@ function ServiceCenter() {
               }}
             >
               {sessionDetails &&
-                sessionDetails?.service.map((item, index) => {
+                Object.keys(sessionDetails.service).map((item, index) => {
                   return (
                     <QueuePicker
                       active={true}
                       index={index}
                       key={index + "active"}
                       item={{
-                        serviceName: item.serviceName,
-                        ticketNumber: item.ticketNumber,
+                        serviceName: sessionDetails.service[item].serviceName,
+                        ticketNumber: sessionDetails.service[item].ticketNumber,
                         serviceCurrentNumber:
                           (availableServicesInBranch &&
                             availableServicesInBranch.find(
                               (service) =>
-                                service?.serviceName === item.serviceName
+                                service?.serviceName ===
+                                sessionDetails.service[item].serviceName
                             ).serviceCurrentNumber) ||
                           0,
                         peopleWaiting:
                           (availableServicesInBranch &&
                             availableServicesInBranch.find(
                               (service) =>
-                                service.serviceName === item.serviceName
+                                service.serviceName ===
+                                sessionDetails.service[item].serviceName
                             ).lastQueueNumber -
                               availableServicesInBranch.find(
                                 (service) =>
-                                  service.serviceName === item.serviceName
+                                  service.serviceName ===
+                                  sessionDetails.service[item].serviceName
                               ).serviceCurrentNumber) ||
                           0,
                       }}
@@ -190,10 +193,7 @@ function ServiceCenter() {
                 availableServicesInBranch.map((item, index) => {
                   if (
                     !(
-                      sessionDetails &&
-                      sessionDetails.service.some(
-                        (it) => it.serviceName === item.serviceName
-                      )
+                      sessionDetails && sessionDetails.service[item.serviceName]
                     )
                   ) {
                     return (
