@@ -9,7 +9,7 @@ function DailyHistory({
   isRunning,
   setIsRunning,
   start,
-  stop,
+  closeQueue,
   pause,
   printDailyHistory,
 }) {
@@ -38,7 +38,7 @@ function DailyHistory({
         <button onClick={isRunning ? pause : start}>
           {!isRunning ? "Start" : "Pause"}
         </button>
-        <button onClick={stop}>Close Queue</button>
+        <button onClick={closeQueue}>Close Queue</button>
         <button onClick={getNextCustomer}>Next Customer</button>
       </div>
     </div>

@@ -77,9 +77,10 @@ function StaffBoard() {
         }),
       })
         .then((response) => response.json())
-        .then((data) => {
+        .then(async (data) => {
+          console.log(data);
           setStaffBoardDetails((e) => (e = data));
-          getWaitingCustomers(staffDetails.branch);
+          await getWaitingCustomers(staffDetails.branch);
         });
     } catch (err) {
       console.error(err);
@@ -131,8 +132,6 @@ function StaffBoard() {
         second: "numeric",
         timeZone: "UTC", // or any other desired time zone
       });
-
-      console.log(humanReadableDate);
 
       return humanReadableDate;
     };
@@ -203,6 +202,20 @@ function StaffBoard() {
       });
   };
 
+  const closeQueue = async () => {
+    await fetch(`${SERVER_URL}/staff/close-queue`, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        branch: staffDetails.branch,
+        service: staffDetails.assignedTo,
+      }),
+    }).then(async () => await getServiceDetails());
+  };
+
   useLayoutEffect(() => {
     isStaffSignedIn();
   }, []);
@@ -221,12 +234,8 @@ function StaffBoard() {
         staffBoardDetails?.serviceCurrentNumber
     );
     setActiveCustomer((e) => (e = active));
-    staffBoardDetails?.serviceCurrentNumber !== 0 && start();
+    staffBoardDetails?.serviceCurrentNumber > 0 && start();
   }, [waitingCustomers, staffBoardDetails, staffDetails]);
-
-  useEffect(() => {
-    console.log("Daily History: ", dailyHistory);
-  }, [dailyHistory]);
 
   return staffDetails ? (
     <BackDrop showNavTabs={true}>
@@ -265,7 +274,7 @@ function StaffBoard() {
           pause={pause}
           isRunning={isRunning}
           setIsRunning={setIsRunning}
-          stop={"k"}
+          closeQueue={closeQueue}
           printDailyHistory={printDailyHistory}
         />
       </div>

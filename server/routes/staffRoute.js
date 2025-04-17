@@ -9,6 +9,7 @@ const {
   getWaitingCustomers,
   addSessionToHistory,
   getDailyHistory,
+  closeQueue,
 } = require("../config/firestoreFunctions");
 
 module.exports = function (app) {
@@ -121,6 +122,19 @@ module.exports = function (app) {
     let history = await getDailyHistory(branch, service);
     response.json(history);
   });
+
+  //
+  //Close Queue
+  app.post("/staff/close-queue", async (request, response) => {
+    const {branch, service} = request.body;
+    try {
+      await closeQueue(branch, service);
+      response.json("Queue Closed");
+    } catch (err) {
+      console.error("Error closing queue: ", err);
+      response.json("Error closing queue");
+    }
+  })
 
   //
   //random route for testing

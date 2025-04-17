@@ -9,6 +9,7 @@ const {
   where,
   addDoc,
   orderBy,
+  updateDoc,
 } = require("firebase/firestore");
 const { db } = require("./firebase");
 
@@ -387,9 +388,31 @@ const addSessionToHistory = async (
     return null;
   }
 };
+
+const closeQueue = async (branch, service) => {
+  const queueRef = doc(
+    db,
+    "Organizations",
+    "Apex Bank",
+    "branches",
+    branch,
+    "availableServices",
+    service
+  );
+  try {
+    await updateDoc(
+      queueRef,
+      { status: "closed", serviceCurrentNumber: 0 },
+      { merge: true }
+    );
+  } catch (err) {
+    console.error("Error closing queue: ", err);
+  }
+};
 module.exports = {
   addBranch,
   testUpdate,
+  closeQueue,
   getSessions,
   getStaffData,
   fetchServices,
