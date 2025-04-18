@@ -105,14 +105,18 @@ module.exports = function (app) {
     const { branch, service, customerDetails, handledBy, serviceDuration } =
       request.body;
 
-    let data = await addSessionToHistory(
-      branch,
-      service,
-      customerDetails,
-      handledBy,
-      serviceDuration
-    );
-    response.json(data);
+    try {
+      let data = await addSessionToHistory(
+        branch,
+        service,
+        customerDetails,
+        handledBy,
+        serviceDuration
+      );
+      response.json(data);
+    } catch (err) {
+      console.error(err);
+    }
   });
 
   //
@@ -126,7 +130,7 @@ module.exports = function (app) {
   //
   //Close Queue
   app.post("/staff/close-queue", async (request, response) => {
-    const {branch, service} = request.body;
+    const { branch, service } = request.body;
     try {
       await closeQueue(branch, service);
       response.json("Queue Closed");
@@ -134,7 +138,7 @@ module.exports = function (app) {
       console.error("Error closing queue: ", err);
       response.json("Error closing queue");
     }
-  })
+  });
 
   //
   //random route for testing
