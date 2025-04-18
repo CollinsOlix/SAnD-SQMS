@@ -218,8 +218,11 @@ function Home() {
                   <option value="Select a branch" disabled>
                     Select A Branch
                   </option>
-                  {availableBranches?.map((aBranch) => (
-                    <option key={aBranch.branchID} value={aBranch.branchName}>
+                  {availableBranches?.map((aBranch, id) => (
+                    <option
+                      key={aBranch.branchID + id}
+                      value={aBranch.branchName}
+                    >
                       {aBranch.branchName}
                     </option>
                   ))}
@@ -237,11 +240,11 @@ function Home() {
                   }}
                 >
                   {availableServices &&
-                    availableServices.map((service) => {
+                    availableServices.map((service, id) => {
                       console.log(service);
                       return (
                         <option
-                          key={service.serviceName}
+                          key={service.serviceName + id}
                           value={service.serviceName}
                         >
                           {service.serviceName}
