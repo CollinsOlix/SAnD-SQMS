@@ -106,7 +106,7 @@ function StaffBoard() {
             return filteredData;
           }
           setWaitingCustomers(
-            filterByServiceName(data, staffDetails.assignedTo)
+            (e) => (e = filterByServiceName(data, staffDetails.assignedTo))
           );
         });
     } catch (err) {}
@@ -179,9 +179,10 @@ function StaffBoard() {
       }),
     })
       .then((response) => response.json())
-      .then((data) => {
+      .then(async(data) => {
         setDailyHistory((e) => (e = data.sessionHistory));
         setWaitingCustomers((e) => (e = data.waitingCustomers));
+        await getServiceDetails();
         reset();
         start();
       });

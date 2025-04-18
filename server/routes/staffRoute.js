@@ -156,6 +156,7 @@ module.exports = function (app) {
   //Close Queue
   app.post("/staff/close-queue", async (request, response) => {
     const { branch, service } = request.body;
+    const { branch, service } = request.body;
     try {
       await closeQueue(branch, service);
       response.json("Queue Closed");
@@ -163,6 +164,7 @@ module.exports = function (app) {
       console.error("Error closing queue: ", err);
       response.json("Error closing queue");
     }
+  });
   });
 
   //
