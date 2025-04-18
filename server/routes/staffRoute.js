@@ -10,6 +10,11 @@ const {
   addSessionToHistory,
   getDailyHistory,
   closeQueue,
+  getBranchInfo,
+  getPriorityCustomers,
+  setPriorityCustomersAvailable,
+  decrementPriorityWaitingNumber,
+  setCustomerServiceToHandled,
 } = require("../config/firestoreFunctions");
 
 module.exports = function (app) {
@@ -57,7 +62,7 @@ module.exports = function (app) {
           response.json({ staffSignedIn: false });
         }
       } catch (err) {
-        console.log(err);
+        console.error(err);
         response.json("Error");
       }
     }
@@ -104,15 +109,39 @@ module.exports = function (app) {
   app.post("/staff/get-next-customer", async (request, response) => {
     const { branch, service, customerDetails, handledBy, serviceDuration } =
       request.body;
+    if (customerDetails.priority == true) {
+      await setCustomerServiceToHandled(sessionId);
+      await updatePriorityQueueDetails();
+    }
 
-    let data = await addSessionToHistory(
+    let sessionHistory = await addSessionToHistory(
       branch,
       service,
       customerDetails,
       handledBy,
       serviceDuration
     );
-    response.json(data);
+    let branchData = await getBranchInfo(branch);
+    let serviceData = await getServiceDetails(branch, service);
+    let priorityCustomers = await getPriorityCustomers(branch, service);
+    if (serviceData.priorityCustomersAvailable) {
+      if (branchData.numberOfPeopleBeforeVIP > 0) {
+        await decrementPriorityWaitingNumber(branch);
+      } else {
+        if (priorityCustomers.length > 0) {
+          response.json({
+            sessionHistory,
+            waitingCustomers: priorityCustomers,
+          });
+        }
+        if (priorityCustomers.length == 0) {
+          await setPriorityCustomersAvailable(branch, service);
+        }
+      }
+    } else if (!serviceData.priorityCustomersAvailable) {
+      let waitingCustomers = await getWaitingCustomers(branch);
+      response.json({ sessionHistory, waitingCustomers });
+    }
   });
 
   //
@@ -126,7 +155,7 @@ module.exports = function (app) {
   //
   //Close Queue
   app.post("/staff/close-queue", async (request, response) => {
-    const {branch, service} = request.body;
+    const { branch, service } = request.body;
     try {
       await closeQueue(branch, service);
       response.json("Queue Closed");
@@ -134,7 +163,7 @@ module.exports = function (app) {
       console.error("Error closing queue: ", err);
       response.json("Error closing queue");
     }
-  })
+  });
 
   //
   //random route for testing

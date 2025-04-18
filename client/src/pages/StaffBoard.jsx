@@ -22,6 +22,7 @@ function StaffBoard() {
   const [elapsedTime, setElapsedTime] = useState(0); // Tracks total elapsed time in seconds
   const [isRunning, setIsRunning] = useState(false); // Tracks whether the stopwatch is running
   const [dailyHistory, setDailyHistory] = useState([]);
+  const [currentlyServing, setCurrentlyServing] = useState(0);
 
   useEffect(() => {
     let timer;
@@ -78,7 +79,6 @@ function StaffBoard() {
       })
         .then((response) => response.json())
         .then(async (data) => {
-          console.log(data);
           setStaffBoardDetails((e) => (e = data));
           await getWaitingCustomers(staffDetails.branch);
         });
@@ -102,7 +102,8 @@ function StaffBoard() {
         .then((response) => response.json())
         .then((data) => {
           function filterByServiceName(data, serviceName) {
-            return data.filter((item) => item.service[serviceName]);
+            let filteredData = data.filter((item) => item.service[serviceName]);
+            return filteredData;
           }
           setWaitingCustomers(
             filterByServiceName(data, staffDetails.assignedTo)
@@ -173,15 +174,18 @@ function StaffBoard() {
           staffId: staffDetails.staffId,
           staffName: staffDetails.name,
         },
+        sessionId: activeCustomer.sessionId || null,
         serviceDuration: elapsedTime,
       }),
     })
       .then((response) => response.json())
       .then((data) => {
-        setDailyHistory((e) => (e = data));
+        setDailyHistory((e) => (e = data.sessionHistory));
+        setWaitingCustomers((e) => (e = data.waitingCustomers));
         reset();
         start();
       });
+    await getServiceDetails();
   };
 
   const getDailyHistory = async () => {
@@ -235,8 +239,14 @@ function StaffBoard() {
     );
     setActiveCustomer((e) => (e = active));
     staffBoardDetails?.serviceCurrentNumber > 0 && start();
-  }, [waitingCustomers, staffBoardDetails, staffDetails]);
+    console.log("CUstomers: ", waitingCustomers);
+    console.log(activeCustomer);
+    setCurrentlyServing((e) => (e = staffBoardDetails.serviceCurrentNumber));
+  }, [staffBoardDetails, staffDetails, waitingCustomers]);
 
+  useEffect(() => {
+    console.log(activeCustomer);
+  }, [activeCustomer]);
   return staffDetails ? (
     <BackDrop showNavTabs={true}>
       <div

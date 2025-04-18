@@ -1,9 +1,10 @@
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import "../styles/serviceCenter.css";
 import AddIcon from "@mui/icons-material/Add";
 import AppContext from "../includes/context";
+import Modal from "react-modal";
 
-const QueuePicker = ({ index, item, active }) => {
+const QueuePicker = ({ index, item, active, noWaitingNumber }) => {
   const {
     customerBranchOption,
     sessionDetails,
@@ -46,9 +47,11 @@ const QueuePicker = ({ index, item, active }) => {
       <p style={{ fontWeight: "bold", fontSize: "1.3em" }}>
         There Are Currently
       </p>
-      <p style={{ fontSize: "6em", fontWeight: "bold", fontFamily: "Inter" }}>
-        {item.peopleWaiting}
-      </p>
+      {!noWaitingNumber && (
+        <p style={{ fontSize: "6em", fontWeight: "bold", fontFamily: "Inter" }}>
+          {item.peopleWaiting}
+        </p>
+      )}
       <p style={{ fontWeight: "bold", fontSize: "1.3em" }}>people waiting</p>
     </div>
   ) : (

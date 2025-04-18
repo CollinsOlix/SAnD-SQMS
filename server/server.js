@@ -5,6 +5,7 @@ const cors = require("cors");
 const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
 require("./routes/staffRoute")(app);
+require("./routes/customerRoute")(app);
 const {
   getCustomerData,
   fetchBranchesFromDB,

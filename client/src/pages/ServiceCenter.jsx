@@ -1,14 +1,37 @@
-import React, { useCallback, useContext, useLayoutEffect } from "react";
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useState,
+} from "react";
 import BackDrop from "../components/BackDrop";
 import { Link, useNavigate } from "react-router";
 import QueuePicker from "../components/QueuePicker";
 import AppContext from "../includes/context";
 import { useParams } from "react-router";
 import "../styles/serviceCenter.css";
+import Modal from "react-modal";
+import { Ring } from "@uiball/loaders";
 
 function ServiceCenter() {
   const navigate = useNavigate();
   const { id } = useParams();
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [shouldDisplayLoadingAnimation, setShouldDisplayLoadingAnimation] =
+    useState(true);
+  const modalStyles = {
+    content: {
+      position: "absolute",
+      zIndex: 5,
+      height: "fit-content",
+      maxWidth: "50%",
+      minWidth: "30%",
+      inset: "0",
+      justifySelf: "center",
+    },
+  };
 
   //
   //Context store
@@ -56,6 +79,7 @@ function ServiceCenter() {
       })
         .then((response) => response.json())
         .then((data) => {
+          console.log(data);
           setAvailableServicesInBranch((e) => (e = data));
         });
     },
@@ -88,12 +112,35 @@ function ServiceCenter() {
     setSessionDetails,
     fetchServices,
   ]);
+
+  const endSession = async () => {
+    await fetch(`${SERVER_URL}/${id}/end-session`, {
+      method: "POST",
+      credentials: "include",
+      body: JSON.stringify({ id }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+      .then((response) => response.json())
+      .then((isSuccessful) => {
+        if (isSuccessful) {
+          setIsModalOpen(false);
+          navigate("/");
+        } else {
+          console.log("Is: ", isSuccessful);
+        }
+      });
+  };
   useLayoutEffect(() => {
-    console.log("Repainting");
     if (isUserLoggedIn()) {
       getSessionData();
     }
   }, [getSessionData, isUserLoggedIn]);
+  useEffect(() => {
+    console.log("Sesh deets: ", sessionDetails);
+    setShouldDisplayLoadingAnimation(false);
+  }, [availableServicesInBranch, sessionDetails]);
 
   if (sessionDetails === "Session not found") {
     return (
@@ -107,9 +154,54 @@ function ServiceCenter() {
         </div>
       </BackDrop>
     );
-  } else
-    return (
+  } else {
+    return shouldDisplayLoadingAnimation ? (
+      <div
+        style={{
+          position: "fixed",
+          zIndex: 99,
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <Ring size={80} lineWeight={5} speed={1} color="white" />
+      </div>
+    ) : (
       <BackDrop>
+        <Modal isOpen={isModalOpen} style={modalStyles}>
+          <div style={{ width: "100%" }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "1em",
+              }}
+            >
+              <h3 style={{ color: "#000" }}>End Session?</h3>
+
+              <span
+                onClick={() => setIsModalOpen(false)}
+                style={{
+                  cursor: "pointer",
+                  padding: "0.3em 0.5em",
+                  backgroundColor: "#12326e",
+                  color: "white",
+                  borderRadius: "10%",
+                }}
+              >
+                close
+              </span>
+            </div>
+            Are you sure you want to end this Session? You would need to pick a
+            new ticket for every queue you have previously joined again.
+            <button onClick={endSession}>Yes I want to end this session</button>
+          </div>
+        </Modal>
         <div className="service-center-container">
           <div style={{ display: "flex" }}>
             <select
@@ -122,10 +214,29 @@ function ServiceCenter() {
                 {customerBranchOption || sessionDetails?.branch}
               </option>
             </select>
-            <div style={{ flex: 4, textAlign: "right" }}>
-              <h1 style={{ color: "white", textShadow: "1px 1px 3px black" }}>
+            <div
+              style={{
+                flex: 4,
+                textAlign: "right",
+                display: "flex",
+                justifyContent: "flex-end",
+              }}
+            >
+              <h1
+                style={{
+                  color: "white",
+                  textShadow: "1px 1px 3px black",
+                  marginRight: 10,
+                }}
+              >
                 Hello, {sessionDetails?.customerDetails.firstName}
               </h1>
+              <button
+                onClick={() => setIsModalOpen(true)}
+                style={{ width: "fit-content" }}
+              >
+                End this session
+              </button>
             </div>
           </div>
           <div
@@ -142,7 +253,7 @@ function ServiceCenter() {
             <div
               style={{
                 position: "relative",
-                zIndex: 1,
+                zIndex: 0,
                 bottom: 0,
                 flex: 1,
                 display: "grid",
@@ -157,36 +268,42 @@ function ServiceCenter() {
               {sessionDetails &&
                 Object.keys(sessionDetails.service).map((item, index) => {
                   return (
-                    <QueuePicker
-                      active={true}
-                      index={index}
-                      key={index + "active"}
-                      item={{
-                        serviceName: sessionDetails.service[item].serviceName,
-                        ticketNumber: sessionDetails.service[item].ticketNumber,
-                        serviceCurrentNumber:
-                          (availableServicesInBranch &&
-                            availableServicesInBranch.find(
-                              (service) =>
-                                service?.serviceName ===
-                                sessionDetails.service[item].serviceName
-                            ).serviceCurrentNumber) ||
-                          0,
-                        peopleWaiting:
-                          (availableServicesInBranch &&
-                            availableServicesInBranch.find(
-                              (service) =>
-                                service.serviceName ===
-                                sessionDetails.service[item].serviceName
-                            ).lastQueueNumber -
+                    <div>
+                      <QueuePicker
+                        noWaitingNumber={
+                          sessionDetails.customerDetails.priority
+                        }
+                        active={true}
+                        index={index}
+                        key={index + "active"}
+                        item={{
+                          serviceName: sessionDetails.service[item].serviceName,
+                          ticketNumber:
+                            sessionDetails.service[item].ticketNumber,
+                          serviceCurrentNumber:
+                            (availableServicesInBranch &&
+                              availableServicesInBranch.find(
+                                (service) =>
+                                  service?.serviceName ===
+                                  sessionDetails.service[item].serviceName
+                              ).serviceCurrentNumber) ||
+                            0,
+                          peopleWaiting:
+                            (availableServicesInBranch &&
                               availableServicesInBranch.find(
                                 (service) =>
                                   service.serviceName ===
                                   sessionDetails.service[item].serviceName
-                              ).serviceCurrentNumber) ||
-                          0,
-                      }}
-                    />
+                              ).lastQueueNumber -
+                                availableServicesInBranch.find(
+                                  (service) =>
+                                    service.serviceName ===
+                                    sessionDetails.service[item].serviceName
+                                ).serviceCurrentNumber) ||
+                            0,
+                        }}
+                      />
+                    </div>
                   );
                 })}
               {availableServicesInBranch &&
@@ -208,6 +325,7 @@ function ServiceCenter() {
         </div>
       </BackDrop>
     );
+  }
 }
 
 export default ServiceCenter;
