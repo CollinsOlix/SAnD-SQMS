@@ -78,7 +78,6 @@ function StaffBoard() {
       })
         .then((response) => response.json())
         .then(async (data) => {
-          console.log(data);
           setStaffBoardDetails((e) => (e = data));
           await getWaitingCustomers(staffDetails.branch);
         });
@@ -105,7 +104,7 @@ function StaffBoard() {
             return data.filter((item) => item.service[serviceName]);
           }
           setWaitingCustomers(
-            filterByServiceName(data, staffDetails.assignedTo)
+            (e) => (e = filterByServiceName(data, staffDetails.assignedTo))
           );
         });
     } catch (err) {}
@@ -177,8 +176,9 @@ function StaffBoard() {
       }),
     })
       .then((response) => response.json())
-      .then((data) => {
+      .then(async (data) => {
         setDailyHistory((e) => (e = data));
+        await getServiceDetails();
         reset();
         start();
       });
