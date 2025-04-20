@@ -12,9 +12,10 @@ const {
   closeQueue,
   getBranchInfo,
   getPriorityCustomers,
-  setPriorityCustomersAvailable,
+  setPriorityCustomersNotAvailable,
   decrementPriorityWaitingNumber,
   setCustomerServiceToHandled,
+  updatePriorityQueueDetails,
 } = require("../config/firestoreFunctions");
 
 module.exports = function (app) {
@@ -107,11 +108,20 @@ module.exports = function (app) {
   });
 
   app.post("/staff/get-next-customer", async (request, response) => {
-    const { branch, service, customerDetails, handledBy, serviceDuration } =
-      request.body;
-    if (customerDetails.priority == true) {
-      await setCustomerServiceToHandled(sessionId);
-      await updatePriorityQueueDetails();
+    const {
+      branch,
+      service,
+      customerDetails,
+      handledBy,
+      sessionId,
+      serviceDuration,
+    } = request.body;
+
+    if (sessionId) {
+      await setCustomerServiceToHandled(sessionId, service);
+      if (customerDetails.priority == true) {
+        await updatePriorityQueueDetails(branch, service);
+      }
     }
 
     let sessionHistory = await addSessionToHistory(
@@ -121,9 +131,10 @@ module.exports = function (app) {
       handledBy,
       serviceDuration
     );
+    let priorityCustomers = await getPriorityCustomers(branch, service);
+    console.log("Priority Customers: ", priorityCustomers);
     let branchData = await getBranchInfo(branch);
     let serviceData = await getServiceDetails(branch, service);
-    let priorityCustomers = await getPriorityCustomers(branch, service);
     if (serviceData.priorityCustomersAvailable) {
       if (branchData.numberOfPeopleBeforeVIP > 0) {
         await decrementPriorityWaitingNumber(branch);
@@ -133,9 +144,6 @@ module.exports = function (app) {
             sessionHistory,
             waitingCustomers: priorityCustomers,
           });
-        }
-        if (priorityCustomers.length == 0) {
-          await setPriorityCustomersAvailable(branch, service);
         }
       }
     } else if (!serviceData.priorityCustomersAvailable) {
@@ -156,7 +164,6 @@ module.exports = function (app) {
   //Close Queue
   app.post("/staff/close-queue", async (request, response) => {
     const { branch, service } = request.body;
-    const { branch, service } = request.body;
     try {
       await closeQueue(branch, service);
       response.json("Queue Closed");
@@ -165,12 +172,15 @@ module.exports = function (app) {
       response.json("Error closing queue");
     }
   });
-  });
 
   //
   //random route for testing
   app.get("/staff/test", async (request, response) => {
-    let data = await getWaitingCustomers("Apex Bank ( Girne )");
+    // let data = await getWaitingCustomers("Apex Bank ( Girne )");
+    let data = await getPriorityCustomers(
+      "Apex Bank ( Girne )",
+      "Account and Card Issues"
+    );
     response.json(data);
   });
 };

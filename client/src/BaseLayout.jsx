@@ -21,17 +21,17 @@ function BaseLayout() {
   return (
     <AppContext
       value={{
-        customerBranchOption,
+        SERVER_URL,
+        staffDetails,
         sessionDetails,
+        setStaffDetails,
         setSessionDetails,
+        staffBoardDetails,
+        customerBranchOption,
+        setStaffBoardDetails,
         setCustomerBranchOption,
         availableServicesInBranch,
         setAvailableServicesInBranch,
-        staffDetails,
-        setStaffDetails,
-        SERVER_URL,
-        staffBoardDetails,
-        setStaffBoardDetails,
       }}
     >
       <BrowserRouter>

@@ -6,6 +6,7 @@ import "../styles/staffBoard.css";
 import Stopwatch from "../components/Stopwatch";
 import DailyHistory from "../components/DailyHistory";
 import printJS from "print-js";
+import { Ring } from "@uiball/loaders";
 
 function StaffBoard() {
   const {
@@ -13,6 +14,7 @@ function StaffBoard() {
     staffDetails,
     setStaffDetails,
     staffBoardDetails,
+    customerBranchOption,
     setStaffBoardDetails,
   } = useContext(AppContext);
   const navigate = useNavigate();
@@ -22,7 +24,9 @@ function StaffBoard() {
   const [elapsedTime, setElapsedTime] = useState(0); // Tracks total elapsed time in seconds
   const [isRunning, setIsRunning] = useState(false); // Tracks whether the stopwatch is running
   const [dailyHistory, setDailyHistory] = useState([]);
-  const [currentlyServing, setCurrentlyServing] = useState(0);
+  const [numberOfPeopleInQueue, setNumberOfPeopleInQueue] = useState(0);
+  const [shouldShowLoadingIndicator, setShouldDisplayLoadingIndicator] =
+    useState(true);
 
   useEffect(() => {
     let timer;
@@ -65,6 +69,7 @@ function StaffBoard() {
   };
 
   const getServiceDetails = async () => {
+    console.log("Staff details: ", staffDetails);
     try {
       await fetch(`${SERVER_URL}/staff/get-service-details`, {
         method: "POST",
@@ -79,11 +84,12 @@ function StaffBoard() {
       })
         .then((response) => response.json())
         .then(async (data) => {
+          console.log("StaffBoard:", data);
           setStaffBoardDetails((e) => (e = data));
-          await getWaitingCustomers(staffDetails.branch);
+          setNumberOfPeopleInQueue((e) => (e = data.lastQueueNumber));
         });
     } catch (err) {
-      console.error(err);
+      console.error("Error getting service details: ", err);
     }
   };
 
@@ -102,12 +108,13 @@ function StaffBoard() {
         .then((response) => response.json())
         .then((data) => {
           function filterByServiceName(data, serviceName) {
-            let filteredData = data.filter((item) => item.service[serviceName]);
+            let filteredData = data.filter(
+              (item) => item?.service[serviceName]
+            );
             return filteredData;
           }
-          setWaitingCustomers(
-            (e) => (e = filterByServiceName(data, staffDetails.assignedTo))
-          );
+          let waitListed = filterByServiceName(data, staffDetails.assignedTo);
+          setWaitingCustomers((e) => (e = waitListed));
         });
     } catch (err) {}
   };
@@ -174,12 +181,12 @@ function StaffBoard() {
           staffId: staffDetails.staffId,
           staffName: staffDetails.name,
         },
-        sessionId: activeCustomer.sessionId || null,
+        sessionId: activeCustomer?.sessionId || null,
         serviceDuration: elapsedTime,
       }),
     })
       .then((response) => response.json())
-      .then(async(data) => {
+      .then(async (data) => {
         setDailyHistory((e) => (e = data.sessionHistory));
         setWaitingCustomers((e) => (e = data.waitingCustomers));
         await getServiceDetails();
@@ -190,21 +197,25 @@ function StaffBoard() {
   };
 
   const getDailyHistory = async () => {
-    await fetch(`${SERVER_URL}/staff/get-daily-history`, {
-      method: "POST",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        branch: staffDetails.branch,
-        service: staffDetails.assignedTo,
-      }),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        setDailyHistory((e) => (e = data));
-      });
+    try {
+      await fetch(`${SERVER_URL}/staff/get-daily-history`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          branch: staffDetails.branch,
+          service: staffDetails.assignedTo,
+        }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          setDailyHistory((e) => (e = data));
+        });
+    } catch (err) {
+      console.error("Error getting daily history: ", err);
+    }
   };
 
   const closeQueue = async () => {
@@ -227,28 +238,59 @@ function StaffBoard() {
 
   useEffect(() => {
     if (staffDetails) {
+      console.log("Trying to get sevice details");
       getServiceDetails();
+      getWaitingCustomers(staffDetails.branch);
       getDailyHistory();
     }
   }, [staffDetails]);
 
   useEffect(() => {
-    let active = waitingCustomers.find(
-      (cust) =>
-        cust.service[staffDetails.assignedTo]?.ticketNumber ===
-        staffBoardDetails?.serviceCurrentNumber
-    );
-    setActiveCustomer((e) => (e = active));
-    staffBoardDetails?.serviceCurrentNumber > 0 && start();
-    console.log("CUstomers: ", waitingCustomers);
-    console.log(activeCustomer);
-    setCurrentlyServing((e) => (e = staffBoardDetails.serviceCurrentNumber));
+    console.log("Staff B deets: ", staffBoardDetails);
+    console.log("Waiting Customers: ", waitingCustomers);
+    console.log("staffDetails: ", staffDetails);
+    if (staffBoardDetails) {
+      let active = waitingCustomers[0];
+      waitingCustomers.forEach((cust) => {
+        if (
+          cust?.service[staffDetails.assignedTo]?.ticketNumber <
+          active?.service[staffDetails.assignedTo]?.ticketNumber
+        ) {
+          active = cust;
+        }
+      });
+
+      setActiveCustomer((e) => (e = active));
+      console.log("active: ", activeCustomer);
+    }
+    activeCustomer &&
+      activeCustomer?.service[staffDetails.assignedTo]?.ticketNumber > 0 &&  start();
   }, [staffBoardDetails, staffDetails, waitingCustomers]);
 
   useEffect(() => {
-    console.log(activeCustomer);
-  }, [activeCustomer]);
-  return staffDetails ? (
+    console.log("Waiting Customers: ", waitingCustomers);
+    if (staffBoardDetails && waitingCustomers)
+      setShouldDisplayLoadingIndicator(false);
+  }, [staffBoardDetails, waitingCustomers]);
+
+  //
+  //Displayed content
+  return shouldShowLoadingIndicator ? (
+    <div
+      style={{
+        position: "fixed",
+        zIndex: 99,
+        inset: 0,
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+      <Ring size={80} lineWeight={5} speed={1} color="white" />
+    </div>
+  ) : staffDetails ? (
     <BackDrop showNavTabs={true}>
       <div
         style={{
@@ -263,10 +305,14 @@ function StaffBoard() {
           <h3 className="darkBlue">Currently Serving</h3>
           <p className="mediumText">Ticket Number</p>
           <div className="ticketRectangle">
-            <h1>{staffBoardDetails?.serviceCurrentNumber || 0}</h1>
+            <h1>
+              {activeCustomer?.service[staffDetails.assignedTo]?.ticketNumber ||
+                0}
+            </h1>
           </div>
           <p className="mediumText darkBlue">Serving Time</p>
           <Stopwatch elapsedTime={elapsedTime} />
+          <h3>{numberOfPeopleInQueue}</h3>
           <div className="customerDetails">
             <h3 className="mediumText darkBlue">Customer Information</h3>
             <p className="mediumText">

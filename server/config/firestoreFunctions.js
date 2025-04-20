@@ -54,7 +54,7 @@ const getBranchInfo = async (branch) => {
 
     return querySnapshot.data();
   } catch (err) {
-    console.log("Get Customer Err: ", err);
+    console.error("Get Customer Err: ", err);
     return null;
   }
 };
@@ -289,7 +289,6 @@ const createNewSession = async (
     const priorityQueueRequest = await getDoc(priorityQueueRef);
     const { priorityCustomersAvailable, priorityLastNumber } =
       priorityQueueRequest.data();
-    console.log(priorityCustomersAvailable, priorityLastNumber);
 
     serviceItem = {
       ...serviceItem,
@@ -453,7 +452,6 @@ const getWaitingCustomers = async (branch) => {
     waitingCustomersRef.forEach((doc) => {
       waitingCustomers.push(doc.data());
     });
-    console.log(waitingCustomers);
     return waitingCustomers;
   } catch (err) {
     console.error(err);
@@ -552,7 +550,7 @@ const getPriorityCustomers = async (branch, service) => {
     priorityRef,
     where("branch", "==", branch),
     where("priority", "==", true),
-    where("hasBeenHandled", "==", false),
+    // where("hasBeenHandled", "==", false),
     orderBy("date")
   );
   try {
@@ -564,14 +562,16 @@ const getPriorityCustomers = async (branch, service) => {
         priorityCustomerArray.push(doc.data());
       }
     });
+    if (!priorityCustomerArray.length > 0)
+      setPriorityCustomersNotAvailable(branch, service);
     return priorityCustomerArray;
   } catch (err) {
-    console.log("Error getting priority customers: ", err);
+    console.error("Error getting priority customers: ", err);
     return [];
   }
 };
 
-const setPriorityCustomersAvailable = async (branch, service) => {
+const setPriorityCustomersNotAvailable = async (branch, service) => {
   const branchRef = doc(db, "Organizations", "Apex Bank", "branches", branch);
   const serviceRef = doc(
     db,
@@ -582,8 +582,13 @@ const setPriorityCustomersAvailable = async (branch, service) => {
     "availableServices",
     service
   );
+  let branchDetails = await getDoc(branchRef);
   try {
-    await setDoc(branchRef, { numberOfPeopleBeforeVIP: 3 }, { merge: true });
+    await setDoc(
+      branchRef,
+      { numberOfPeopleBeforeVIP: branchDetails.data().priorityMaxWait },
+      { merge: true }
+    );
     await setDoc(
       serviceRef,
       {
@@ -592,11 +597,11 @@ const setPriorityCustomersAvailable = async (branch, service) => {
       { merge: true }
     );
   } catch (err) {
-    console.log("Error setting priority customers available: ", err);
+    console.error("Error setting priority customers available: ", err);
   }
 };
 
-const setCustomerServiceToHandled = async (sessionId) => {
+const setCustomerServiceToHandled = async (sessionId, service) => {
   const sessionRef = doc(
     db,
     "Organizations",
@@ -604,17 +609,45 @@ const setCustomerServiceToHandled = async (sessionId) => {
     "sessions",
     sessionId
   );
+  const sessionDeets = await getDoc(sessionRef);
+  let oldService = sessionDeets.data().service;
+  delete oldService[service];
   try {
     await updateDoc(
       sessionRef,
       {
-        hasBeenHandled: true,
+        service: oldService,
       },
       { merge: true }
     );
   } catch (err) {
-    console.log("Error setting customer service to handled: ", err);
+    console.error("Error setting customer service to handled: ", err);
   }
+};
+
+const updatePriorityQueueDetails = async (branch, service) => {
+  const serviceRef = doc(
+    db,
+    "Organizations",
+    "Apex Bank",
+    "branches",
+    branch,
+    "availableServices",
+    service
+  );
+  const serviceDeets = await getDoc(serviceRef);
+
+  await setDoc(
+    serviceRef,
+    {
+      priorityCurrentNumber:
+        serviceDeets.data().priorityCurrentNumber + 1 >
+        serviceDeets.data().priorityLastNumber
+          ? serviceDeets.data().priorityLastNumber
+          : serviceDeets.data().priorityCurrentNumber + 1,
+    },
+    { merge: true }
+  );
 };
 module.exports = {
   addBranch,
@@ -637,7 +670,8 @@ module.exports = {
   getPriorityCustomers,
   setBranchDefaultValues,
   updateServiceQueueNumber,
+  updatePriorityQueueDetails,
   setCustomerServiceToHandled,
-  setPriorityCustomersAvailable,
+  setPriorityCustomersNotAvailable,
   decrementPriorityWaitingNumber,
 };

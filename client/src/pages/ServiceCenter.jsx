@@ -138,8 +138,10 @@ function ServiceCenter() {
     }
   }, [getSessionData, isUserLoggedIn]);
   useEffect(() => {
-    console.log("Sesh deets: ", sessionDetails);
-    setShouldDisplayLoadingAnimation(false);
+    console.log(availableServicesInBranch);
+    availableServicesInBranch &&
+      sessionDetails &&
+      setShouldDisplayLoadingAnimation(false);
   }, [availableServicesInBranch, sessionDetails]);
 
   if (sessionDetails === "Session not found") {
