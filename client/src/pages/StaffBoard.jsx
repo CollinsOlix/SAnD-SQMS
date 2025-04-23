@@ -61,6 +61,7 @@ function StaffBoard() {
       .then((response) => response.json())
       .then((data) => {
         if (data.staffSignedIn === true) {
+          console.log("Yes: ", data.staffDetails);
           setStaffDetails((e) => (e = data.staffDetails));
         } else {
           navigate("/staff");
@@ -70,53 +71,59 @@ function StaffBoard() {
 
   const getServiceDetails = async () => {
     console.log("Staff details: ", staffDetails);
-    try {
-      await fetch(`${SERVER_URL}/staff/get-service-details`, {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          branch: staffDetails.branch,
-          service: staffDetails.assignedTo,
-        }),
-      })
-        .then((response) => response.json())
-        .then(async (data) => {
-          console.log("StaffBoard:", data);
-          setStaffBoardDetails((e) => (e = data));
-          setNumberOfPeopleInQueue((e) => (e = data.lastQueueNumber));
-        });
-    } catch (err) {
-      console.error("Error getting service details: ", err);
+    if (staffDetails) {
+      try {
+        await fetch(`${SERVER_URL}/staff/get-service-details`, {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            branch: staffDetails.branch,
+            service: staffDetails.assignedTo,
+          }),
+        })
+          .then((response) => response.json())
+          .then(async (data) => {
+            console.log("StaffBoard:", data);
+            setStaffBoardDetails((e) => (e = data));
+          });
+      } catch (err) {
+        console.error("Error getting service details: ", err);
+      }
     }
   };
 
   const getWaitingCustomers = async (branch) => {
-    try {
-      await fetch(`${SERVER_URL}/staff/get-waiting-customers`, {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          branch,
-        }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          function filterByServiceName(data, serviceName) {
-            let filteredData = data.filter(
-              (item) => item?.service[serviceName]
-            );
-            return filteredData;
-          }
-          let waitListed = filterByServiceName(data, staffDetails.assignedTo);
-          setWaitingCustomers((e) => (e = waitListed));
-        });
-    } catch (err) {}
+    if (staffDetails) {
+      try {
+        await fetch(`${SERVER_URL}/staff/get-waiting-customers`, {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            branch,
+          }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            function filterByServiceName(data, serviceName) {
+              let filteredData = data.filter(
+                (item) => item?.service[serviceName]
+              );
+              return filteredData;
+            }
+            let waitListed = filterByServiceName(data, staffDetails.assignedTo);
+            setWaitingCustomers((e) => (e = waitListed));
+            setNumberOfPeopleInQueue((e) => (e = waitListed.length));
+          });
+      } catch (err) {
+        console.error("Error getting waiting customers: ", err);
+      }
+    }
   };
 
   const printDailyHistory = async () => {
@@ -197,24 +204,27 @@ function StaffBoard() {
   };
 
   const getDailyHistory = async () => {
-    try {
-      await fetch(`${SERVER_URL}/staff/get-daily-history`, {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          branch: staffDetails.branch,
-          service: staffDetails.assignedTo,
-        }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          setDailyHistory((e) => (e = data));
-        });
-    } catch (err) {
-      console.error("Error getting daily history: ", err);
+    if (staffDetails) {
+      console.log("From Daily History: ", staffDetails);
+      try {
+        await fetch(`${SERVER_URL}/staff/get-daily-history`, {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            branch: staffDetails.branch,
+            service: staffDetails.assignedTo,
+          }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            setDailyHistory((e) => (e = data));
+          });
+      } catch (err) {
+        console.error("Error getting daily history: ", err);
+      }
     }
   };
 
@@ -237,8 +247,8 @@ function StaffBoard() {
   }, []);
 
   useEffect(() => {
+    console.log("Trying to get sevice details: ", staffDetails);
     if (staffDetails) {
-      console.log("Trying to get sevice details");
       getServiceDetails();
       getWaitingCustomers(staffDetails.branch);
       getDailyHistory();
@@ -251,21 +261,25 @@ function StaffBoard() {
     console.log("staffDetails: ", staffDetails);
     if (staffBoardDetails) {
       let active = waitingCustomers[0];
-      waitingCustomers.forEach((cust) => {
-        if (
-          cust?.service[staffDetails.assignedTo]?.ticketNumber <
-          active?.service[staffDetails.assignedTo]?.ticketNumber
-        ) {
-          active = cust;
-        }
-      });
-
+      if (waitingCustomers.length)
+        waitingCustomers.forEach((cust) => {
+          if (
+            cust?.service[staffDetails?.assignedTo]?.ticketNumber <
+            active?.service[staffDetails?.assignedTo]?.ticketNumber
+          ) {
+            active = cust;
+          }
+        });
+      console.log("active: ", active);
       setActiveCustomer((e) => (e = active));
       console.log("active: ", activeCustomer);
     }
     activeCustomer &&
-      activeCustomer?.service[staffDetails.assignedTo]?.ticketNumber > 0 &&  start();
-  }, [staffBoardDetails, staffDetails, waitingCustomers]);
+      staffDetails &&
+      typeof activeCustomer?.service?.[staffDetails?.assignedTo]
+        ?.ticketNumber == "number" &&
+      start();
+  }, [staffBoardDetails, waitingCustomers]);
 
   useEffect(() => {
     console.log("Waiting Customers: ", waitingCustomers);
@@ -306,13 +320,14 @@ function StaffBoard() {
           <p className="mediumText">Ticket Number</p>
           <div className="ticketRectangle">
             <h1>
-              {activeCustomer?.service[staffDetails.assignedTo]?.ticketNumber ||
-                0}
+              {activeCustomer?.service[staffDetails?.assignedTo]
+                ?.ticketNumber || 0}
             </h1>
           </div>
           <p className="mediumText darkBlue">Serving Time</p>
           <Stopwatch elapsedTime={elapsedTime} />
           <h3>{numberOfPeopleInQueue}</h3>
+          <hr style={{ width: "100%" }} />
           <div className="customerDetails">
             <h3 className="mediumText darkBlue">Customer Information</h3>
             <p className="mediumText">
@@ -321,6 +336,9 @@ function StaffBoard() {
             <p className="mediumText">
               Customer Number: {activeCustomer?.customerNumber}
             </p>
+            {activeCustomer && activeCustomer.priority && (
+              <p className="mediumText">Priority Customer</p>
+            )}
           </div>
         </div>
         <DailyHistory

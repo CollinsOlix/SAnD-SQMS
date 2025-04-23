@@ -271,6 +271,8 @@ const createNewSession = async (
   let serviceItem = serviceToJoin.find(
     (availService) => availService.serviceName === service
   );
+
+  console.log("Customer Type: ", customerDetails);
   //
   //Make it such that if the customer is a priority customer,
   //the session is created with a priority status
@@ -369,6 +371,7 @@ const createNewSession = async (
           sessionId: newSessionId,
           date: Timestamp.now(),
           customerDetails,
+          priority: customerDetails.priority,
         }
       );
     } catch (error) {
@@ -444,14 +447,19 @@ const getWaitingCustomers = async (branch) => {
   const q = query(
     collection(db, "Organizations", "Apex Bank", "sessions"),
     where("date", ">", getToday()),
-    where("branch", "==", branch)
+    where("branch", "==", branch),
+    where("priority", "!=", true)
   );
   try {
     const waitingCustomersRef = await getDocs(q);
-    const waitingCustomers = [];
+    let waitingCustomers = waitingCustomersRef.docs.map((doc) => doc.data());
+    console.log("before sort: ", waitingCustomers);
+    waitingCustomers = [];
     waitingCustomersRef.forEach((doc) => {
-      waitingCustomers.push(doc.data());
+      if (Object.keys(doc.data().service).length > 0)
+        waitingCustomers.push(doc.data());
     });
+    console.log(waitingCustomers);
     return waitingCustomers;
   } catch (err) {
     console.error(err);

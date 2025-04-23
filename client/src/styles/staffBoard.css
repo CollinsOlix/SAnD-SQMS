@@ -12,6 +12,7 @@
   margin: 0 0.8em 0 0;
   .darkBlue {
     color: #0c2a5d;
+    font-size: 1.6em;
   }
   .ticketRectangle {
     border: 6px solid #0c2a5d;
@@ -21,7 +22,6 @@
   }
   h3 {
     color: #000;
-  
   }
   h1 {
     font-size: 7em;
@@ -33,7 +33,7 @@
     color: #3a72da;
   }
   .mediumText {
-    font-size: 1.9em;
+    font-size: 1.4em;
     font-weight: 600;
   }
   .customerDetails {
