@@ -139,9 +139,9 @@ function ServiceCenter() {
   }, [getSessionData, isUserLoggedIn]);
   useEffect(() => {
     console.log(availableServicesInBranch);
-    availableServicesInBranch &&
-      sessionDetails &&
+    if (availableServicesInBranch && sessionDetails) {
       setShouldDisplayLoadingAnimation(false);
+    }
   }, [availableServicesInBranch, sessionDetails]);
 
   if (sessionDetails === "Session not found") {

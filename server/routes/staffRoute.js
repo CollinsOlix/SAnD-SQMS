@@ -16,6 +16,7 @@ const {
   decrementPriorityWaitingNumber,
   setCustomerServiceToHandled,
   updatePriorityQueueDetails,
+  deleteAllHistory,
 } = require("../config/firestoreFunctions");
 
 module.exports = function (app) {
@@ -116,27 +117,35 @@ module.exports = function (app) {
       sessionId,
       serviceDuration,
     } = request.body;
+    let sessionHistory;
 
     if (sessionId) {
+      sessionHistory = await addSessionToHistory(
+        branch,
+        service,
+        customerDetails,
+        handledBy,
+        serviceDuration
+      );
       await setCustomerServiceToHandled(sessionId, service);
       if (customerDetails.priority == true) {
         await updatePriorityQueueDetails(branch, service);
       }
+    } else {
+      sessionHistory = await getDailyHistory(branch, service);
     }
 
-    let sessionHistory = await addSessionToHistory(
-      branch,
-      service,
-      customerDetails,
-      handledBy,
-      serviceDuration
-    );
     let priorityCustomers = await getPriorityCustomers(branch, service);
+    let waitingCustomers = await getWaitingCustomers(branch);
     console.log("Priority Customers: ", priorityCustomers);
+    console.log("Waiting Customers: ", waitingCustomers);
     let branchData = await getBranchInfo(branch);
     let serviceData = await getServiceDetails(branch, service);
     if (serviceData.priorityCustomersAvailable) {
-      if (branchData.numberOfPeopleBeforeVIP > 0) {
+      if (
+        branchData.numberOfPeopleBeforeVIP > 0 &&
+        waitingCustomers.length > 0
+      ) {
         await decrementPriorityWaitingNumber(branch);
       } else {
         if (priorityCustomers.length > 0) {
@@ -147,7 +156,6 @@ module.exports = function (app) {
         }
       }
     } else if (!serviceData.priorityCustomersAvailable) {
-      let waitingCustomers = await getWaitingCustomers(branch);
       response.json({ sessionHistory, waitingCustomers });
     }
   });
@@ -177,10 +185,11 @@ module.exports = function (app) {
   //random route for testing
   app.get("/staff/test", async (request, response) => {
     // let data = await getWaitingCustomers("Apex Bank ( Girne )");
-    let data = await getPriorityCustomers(
-      "Apex Bank ( Girne )",
-      "Account and Card Issues"
-    );
+    // let data = await getPriorityCustomers(
+    //   "Apex Bank ( Girne )",
+    //   "Account and Card Issues"
+    // );
+    let data = await deleteAllHistory("Apex Bank ( Girne )");
     response.json(data);
   });
 };

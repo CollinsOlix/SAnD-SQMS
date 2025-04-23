@@ -20,13 +20,14 @@ function StaffBoard() {
   const navigate = useNavigate();
 
   const [waitingCustomers, setWaitingCustomers] = useState([]);
-  const [activeCustomer, setActiveCustomer] = useState({});
+  const [activeCustomer, setActiveCustomer] = useState();
   const [elapsedTime, setElapsedTime] = useState(0); // Tracks total elapsed time in seconds
   const [isRunning, setIsRunning] = useState(false); // Tracks whether the stopwatch is running
   const [dailyHistory, setDailyHistory] = useState([]);
   const [numberOfPeopleInQueue, setNumberOfPeopleInQueue] = useState(0);
   const [shouldShowLoadingIndicator, setShouldDisplayLoadingIndicator] =
     useState(true);
+  const [activeCustomerNumber, setActiveCustomerNumber] = useState();
 
   useEffect(() => {
     let timer;
@@ -61,7 +62,6 @@ function StaffBoard() {
       .then((response) => response.json())
       .then((data) => {
         if (data.staffSignedIn === true) {
-          console.log("Yes: ", data.staffDetails);
           setStaffDetails((e) => (e = data.staffDetails));
         } else {
           navigate("/staff");
@@ -70,7 +70,6 @@ function StaffBoard() {
   };
 
   const getServiceDetails = async () => {
-    console.log("Staff details: ", staffDetails);
     if (staffDetails) {
       try {
         await fetch(`${SERVER_URL}/staff/get-service-details`, {
@@ -86,7 +85,6 @@ function StaffBoard() {
         })
           .then((response) => response.json())
           .then(async (data) => {
-            console.log("StaffBoard:", data);
             setStaffBoardDetails((e) => (e = data));
           });
       } catch (err) {
@@ -117,7 +115,21 @@ function StaffBoard() {
               return filteredData;
             }
             let waitListed = filterByServiceName(data, staffDetails.assignedTo);
+            console.log("Waitlisted: ", waitListed);
             setWaitingCustomers((e) => (e = waitListed));
+            if (staffBoardDetails) {
+              let active = waitListed[0];
+              if (waitListed.length)
+                waitListed.forEach((cust) => {
+                  if (
+                    cust?.service[staffDetails?.assignedTo]?.ticketNumber <
+                    active?.service[staffDetails?.assignedTo]?.ticketNumber
+                  ) {
+                    active = cust;
+                  }
+                });
+              setActiveCustomer((e) => (e = active));
+            }
             setNumberOfPeopleInQueue((e) => (e = waitListed.length));
           });
       } catch (err) {
@@ -196,16 +208,27 @@ function StaffBoard() {
       .then(async (data) => {
         setDailyHistory((e) => (e = data.sessionHistory));
         setWaitingCustomers((e) => (e = data.waitingCustomers));
+        if (staffBoardDetails) {
+          let active = data.waitingCustomers[0];
+          if (data.waitingCustomers.length)
+            data.waitingCustomers.forEach((cust) => {
+              if (
+                cust?.service[staffDetails?.assignedTo]?.ticketNumber <
+                active?.service[staffDetails?.assignedTo]?.ticketNumber
+              ) {
+                active = cust;
+              }
+            });
+          setActiveCustomer((e) => (e = active));
+        }
         await getServiceDetails();
         reset();
-        start();
       });
     await getServiceDetails();
   };
 
   const getDailyHistory = async () => {
     if (staffDetails) {
-      console.log("From Daily History: ", staffDetails);
       try {
         await fetch(`${SERVER_URL}/staff/get-daily-history`, {
           method: "POST",
@@ -247,7 +270,6 @@ function StaffBoard() {
   }, []);
 
   useEffect(() => {
-    console.log("Trying to get sevice details: ", staffDetails);
     if (staffDetails) {
       getServiceDetails();
       getWaitingCustomers(staffDetails.branch);
@@ -256,9 +278,6 @@ function StaffBoard() {
   }, [staffDetails]);
 
   useEffect(() => {
-    console.log("Staff B deets: ", staffBoardDetails);
-    console.log("Waiting Customers: ", waitingCustomers);
-    console.log("staffDetails: ", staffDetails);
     if (staffBoardDetails) {
       let active = waitingCustomers[0];
       if (waitingCustomers.length)
@@ -273,7 +292,10 @@ function StaffBoard() {
       console.log("active: ", active);
       setActiveCustomer((e) => (e = active));
       console.log("active: ", activeCustomer);
+      console.log("wait: ", numberOfPeopleInQueue);
     }
+    setNumberOfPeopleInQueue(waitingCustomers.length);
+
     activeCustomer &&
       staffDetails &&
       typeof activeCustomer?.service?.[staffDetails?.assignedTo]
@@ -282,11 +304,14 @@ function StaffBoard() {
   }, [staffBoardDetails, waitingCustomers]);
 
   useEffect(() => {
-    console.log("Waiting Customers: ", waitingCustomers);
     if (staffBoardDetails && waitingCustomers)
       setShouldDisplayLoadingIndicator(false);
   }, [staffBoardDetails, waitingCustomers]);
 
+  useEffect(() => {
+    activeCustomer?.customerNumber &&
+      setActiveCustomerNumber(activeCustomer.customerNumber);
+  }, [activeCustomer]);
   //
   //Displayed content
   return shouldShowLoadingIndicator ? (
@@ -320,7 +345,7 @@ function StaffBoard() {
           <p className="mediumText">Ticket Number</p>
           <div className="ticketRectangle">
             <h1>
-              {activeCustomer?.service[staffDetails?.assignedTo]
+              {activeCustomer?.service?.[staffDetails?.assignedTo]
                 ?.ticketNumber || 0}
             </h1>
           </div>
@@ -331,10 +356,10 @@ function StaffBoard() {
           <div className="customerDetails">
             <h3 className="mediumText darkBlue">Customer Information</h3>
             <p className="mediumText">
-              Customer Name: {activeCustomer?.customerDetails.firstName || ""}
+              Customer Name: {activeCustomer?.customerDetails?.firstName || ""}
             </p>
             <p className="mediumText">
-              Customer Number: {activeCustomer?.customerNumber}
+              Customer Number: {activeCustomerNumber}
             </p>
             {activeCustomer && activeCustomer.priority && (
               <p className="mediumText">Priority Customer</p>

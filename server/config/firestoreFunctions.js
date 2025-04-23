@@ -657,6 +657,34 @@ const updatePriorityQueueDetails = async (branch, service) => {
     { merge: true }
   );
 };
+
+const deleteAllHistory = async (branch) => {
+  let historyRef = await getDocs(
+    collection(db, "Organizations", "Apex Bank", "branches", branch, "history")
+  );
+  let historyDocs = [];
+  historyRef.forEach((doc) => historyDocs.push(doc.id));
+  let i = 0;
+  let deleteFunc = async () => {
+    if (i < historyDocs.length) {
+      let hh = doc(
+        db,
+        "Organizations",
+        "Apex Bank",
+        "branches",
+        branch,
+        "history",
+        historyDocs[i]
+      );
+      await deleteDoc(hh);
+      i++;
+      await deleteFunc();
+    }
+  };
+
+  await deleteFunc();
+  return historyDocs;
+};
 module.exports = {
   addBranch,
   testUpdate,
@@ -668,6 +696,7 @@ module.exports = {
   fetchServices,
   getCustomerData,
   getDailyHistory,
+  deleteAllHistory,
   joinServiceQueue,
   createNewSession,
   getServiceDetails,
