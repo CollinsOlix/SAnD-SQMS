@@ -5,7 +5,7 @@ import StaffSignIn from "./pages/StaffSignIn";
 import AdminDashboard from "./pages/AdminDashboard";
 import ServiceCenter from "./pages/ServiceCenter";
 import LocalService from "./pages/LocalService";
-import Afterqrcode from "./pages/afterQrcode";
+import Afterqrcode from "./pages/QueueStatus";
 import App from "./App";
 import Test from "./pages/Test";
 
