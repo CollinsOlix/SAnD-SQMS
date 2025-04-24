@@ -138,9 +138,9 @@ function ServiceCenter() {
     }
   }, [getSessionData, isUserLoggedIn]);
   useEffect(() => {
-    console.log(availableServicesInBranch);
+    console.log("Avail: ", availableServicesInBranch);
     if (availableServicesInBranch && sessionDetails) {
-      setShouldDisplayLoadingAnimation(false);
+      setShouldDisplayLoadingAnimation((e) => (e = false));
     }
   }, [availableServicesInBranch, sessionDetails]);
 

@@ -24,6 +24,7 @@ const actionServices = [
           ),
           onClick: addBranch,
           action: "Add Branch",
+          requiresSuperAdmin: true,
         },
       },
       {
@@ -37,6 +38,7 @@ const actionServices = [
           ),
           onClick: addBranch,
           action: "Remove a Branch",
+          requiresSuperAdmin: true,
         },
       },
       {
@@ -48,7 +50,9 @@ const actionServices = [
               }}
             />
           ),
+          action: "Add a Service",
           onClick: addService,
+          requiresSuperAdmin: false,
         },
       },
       {
@@ -61,6 +65,7 @@ const actionServices = [
             />
           ),
           onClick: addBranch,
+          requiresSuperAdmin: false,
         },
       },
       {
@@ -73,6 +78,7 @@ const actionServices = [
             />
           ),
           onClick: addBranch,
+          requiresSuperAdmin: false,
         },
       },
       {
@@ -85,6 +91,7 @@ const actionServices = [
             />
           ),
           onClick: addBranch,
+          requiresSuperAdmin: true,
         },
       },
     ],
@@ -102,6 +109,7 @@ const actionServices = [
           ),
           onClick: addBranch,
           action: "Add Queue",
+          requiresSuperAdmin: false,
         },
       },
       {
@@ -115,18 +123,7 @@ const actionServices = [
           ),
           onClick: addBranch,
           action: "Remove Queue",
-        },
-      },
-      {
-        "Assign a service to a Queue": {
-          icon: (
-            <AddIcon
-              sx={{
-                fontSize: 70,
-              }}
-            />
-          ),
-          onClick: addBranch,
+          requiresSuperAdmin: false,
         },
       },
     ],
@@ -143,6 +140,7 @@ const actionServices = [
             />
           ),
           onClick: addBranch,
+          requiresSuperAdmin: false,
         },
       },
       {
@@ -155,6 +153,7 @@ const actionServices = [
             />
           ),
           onClick: addBranch,
+          requiresSuperAdmin: false,
         },
       },
       {
@@ -167,6 +166,7 @@ const actionServices = [
             />
           ),
           onClick: addBranch,
+          requiresSuperAdmin: false,
         },
       },
     ],

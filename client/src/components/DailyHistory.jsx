@@ -3,6 +3,8 @@ import ServedItem from "./ServedItem";
 import "../styles/staffBoard.css";
 
 function DailyHistory({
+  openQueue,
+  isQueueOpen,
   staffDetails,
   getNextCustomer,
   historyData,
@@ -35,11 +37,29 @@ function DailyHistory({
         ))}
       </div>
       <div className="dailyHistory bottom">
-        <button onClick={isRunning ? pause : start}>
+        <button
+          disabled={isQueueOpen && isQueueOpen === "closed"}
+          onClick={isRunning ? pause : start}
+          style={{
+            backgroundColor: isQueueOpen === "closed" && "gray",
+            color: isQueueOpen === "closed" && "#454545",
+          }}
+        >
           {!isRunning ? "Start" : "Pause"}
         </button>
-        <button onClick={closeQueue}>Close Queue</button>
-        <button onClick={getNextCustomer}>Next Customer</button>
+        <button onClick={isQueueOpen === "closed" ? openQueue : closeQueue}>
+          {isQueueOpen === "closed" ? "Open Queue" : "Close Queue"}
+        </button>
+        <button
+          style={{
+            backgroundColor: isQueueOpen === "closed" && "gray",
+            color: isQueueOpen === "closed" && "#454545",
+          }}
+          disabled={isQueueOpen && isQueueOpen === "closed"}
+          onClick={getNextCustomer}
+        >
+          Next Customer
+        </button>
       </div>
     </div>
   );

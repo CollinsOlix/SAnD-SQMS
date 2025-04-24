@@ -20,13 +20,14 @@ function Home() {
   const [firstName, setFirstName] = useState();
   const [customerNumber, setCustomerNumber] = useState();
   const [trials, setTrials] = useState(0);
-  const [service, setService] = useState();
+  const [service, setService] = useState(null);
   const branchOptionsRef = useRef(null);
   const serviceOptionsRef = useRef(null);
 
   //
   //Context store
-  const { setCustomerBranchOption, SERVER_URL } = useContext(AppContext);
+  const { customerBranchOption, setCustomerBranchOption, SERVER_URL } =
+    useContext(AppContext);
 
   const getSessionData = useCallback(
     async (id) => {
@@ -65,6 +66,10 @@ function Home() {
       .then((data) => {
         console.log("Avail Services: ", data);
         setAvailableServices(data);
+        setService(
+          (e) =>
+            (e = data.find((item) => item?.status !== "closed").serviceName)
+        );
         return data;
       });
   };
@@ -240,22 +245,23 @@ function Home() {
                   }}
                 >
                   {availableServices &&
-                    availableServices.map((service, id) => {
-                      console.log(service);
-                      return (
-                        <option
-                          key={service.serviceName + id}
-                          value={service.serviceName}
-                        >
-                          {service.serviceName}
-                        </option>
-                      );
-                    })}
+                    availableServices.map((s, id) => (
+                      <option
+                        key={s.serviceName + id}
+                        value={s.serviceName}
+                        disabled={s?.status === "closed"}
+                      >
+                        {s.serviceName}
+                      </option>
+                    ))}
                 </select>
               </div>
 
               <div className="get-ticket">
                 <button
+                  disabled={
+                    service && firstName && customerNumber ? false : true
+                  }
                   onClick={async () => {
                     if (trials >= 7) {
                       setErrorMessage(

@@ -27,9 +27,13 @@ function SignInComponent({
     })
       .then((response) => response.json())
       .then((data) => {
-        console.log(data.staffSignedIn);
+        console.log(data);
         if (data.staffSignedIn) {
-          navigate("/staff/board");
+          if (data.staffType === "staff") {
+            navigate("/staff/board");
+          } else if (data.staffType === "admin") {
+            navigate(`/admin/${data.staffId}`);
+          }
         } else {
           alert("Invalid Staff ID or Password");
         }

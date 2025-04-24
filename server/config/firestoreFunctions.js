@@ -520,6 +520,27 @@ const addSessionToHistory = async (
   }
 };
 
+const createNewService = async (branch, service) => {
+  const servicesRef = collection(
+    db,
+    "Organizations",
+    "Apex Bank",
+    "branches",
+    branch,
+    "availableServices",
+    service
+  );
+  await setDoc(servicesRef, {
+    lastQueueNumber: 2,
+    priorityCurrentNumber: 3,
+    priorityCustomersAvailable: true,
+    priorityLastNumber: 10,
+    serviceCurrentNumber: 2,
+    serviceName: service,
+    status: "close",
+  });
+};
+
 const closeQueue = async (branch, service) => {
   const queueRef = doc(
     db,
@@ -536,6 +557,22 @@ const closeQueue = async (branch, service) => {
       { status: "closed", serviceCurrentNumber: 0 },
       { merge: true }
     );
+  } catch (err) {
+    console.error("Error closing queue: ", err);
+  }
+};
+const openQueue = async (branch, service) => {
+  const queueRef = doc(
+    db,
+    "Organizations",
+    "Apex Bank",
+    "branches",
+    branch,
+    "availableServices",
+    service
+  );
+  try {
+    await updateDoc(queueRef, { status: "open" }, { merge: true });
   } catch (err) {
     console.error("Error closing queue: ", err);
   }
@@ -687,6 +724,7 @@ const deleteAllHistory = async (branch) => {
 };
 module.exports = {
   addBranch,
+  openQueue,
   testUpdate,
   closeQueue,
   endSession,
@@ -696,6 +734,7 @@ module.exports = {
   fetchServices,
   getCustomerData,
   getDailyHistory,
+  createNewService,
   deleteAllHistory,
   joinServiceQueue,
   createNewSession,

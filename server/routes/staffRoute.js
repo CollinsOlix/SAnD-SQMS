@@ -9,7 +9,7 @@ const {
   getWaitingCustomers,
   addSessionToHistory,
   getDailyHistory,
-  closeQueue,
+  openQueue,
   getBranchInfo,
   getPriorityCustomers,
   setPriorityCustomersNotAvailable,
@@ -41,6 +41,7 @@ module.exports = function (app) {
     } else {
       try {
         const staffDetails = await getStaffData(staffId, password);
+        console.log("staff det: ", staffDetails);
         if (staffDetails) {
           const secretStaffToken = jwt.sign(
             {
@@ -59,6 +60,7 @@ module.exports = function (app) {
             .json({
               staffSignedIn: staffDetails ? true : false,
               staffId,
+              staffType: staffDetails.staffType,
             });
         } else {
           response.json({ staffSignedIn: false });
@@ -77,9 +79,11 @@ module.exports = function (app) {
         if (err) {
           response.json({ staffSignedIn: false });
         } else {
+          let staffDetails = decoded.staffDetails;
+          delete staffDetails.password;
           response.json({
             staffSignedIn: true,
-            staffDetails: decoded.staffDetails,
+            staffDetails,
           });
         }
       });
@@ -137,8 +141,6 @@ module.exports = function (app) {
 
     let priorityCustomers = await getPriorityCustomers(branch, service);
     let waitingCustomers = await getWaitingCustomers(branch);
-    console.log("Priority Customers: ", priorityCustomers);
-    console.log("Waiting Customers: ", waitingCustomers);
     let branchData = await getBranchInfo(branch);
     let serviceData = await getServiceDetails(branch, service);
     if (serviceData.priorityCustomersAvailable) {
@@ -180,6 +182,16 @@ module.exports = function (app) {
       response.json("Error closing queue");
     }
   });
+  app.post("/staff/open-queue", async (request, response) => {
+    const { branch, service } = request.body;
+    try {
+      await openQueue(branch, service);
+      response.json("Queue Closed");
+    } catch (err) {
+      console.error("Error closing queue: ", err);
+      response.json("Error closing queue");
+    }
+  });
 
   //
   //random route for testing
@@ -189,7 +201,7 @@ module.exports = function (app) {
     //   "Apex Bank ( Girne )",
     //   "Account and Card Issues"
     // );
-    let data = await deleteAllHistory("Apex Bank ( Girne )");
+    // let data = await deleteAllHistory("Apex Bank ( Girne )");
     response.json(data);
   });
 };

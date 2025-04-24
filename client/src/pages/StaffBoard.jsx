@@ -264,6 +264,19 @@ function StaffBoard() {
       }),
     }).then(async () => await getServiceDetails());
   };
+  const openQueue = async () => {
+    await fetch(`${SERVER_URL}/staff/open-queue`, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        branch: staffDetails.branch,
+        service: staffDetails.assignedTo,
+      }),
+    }).then(async () => await getServiceDetails());
+  };
 
   useLayoutEffect(() => {
     isStaffSignedIn();
@@ -351,7 +364,9 @@ function StaffBoard() {
           </div>
           <p className="mediumText darkBlue">Serving Time</p>
           <Stopwatch elapsedTime={elapsedTime} />
-          <h3>{numberOfPeopleInQueue}</h3>
+          <h3>
+            Number of people waiting: {Math.max(numberOfPeopleInQueue - 1, 0)}
+          </h3>
           <hr style={{ width: "100%" }} />
           <div className="customerDetails">
             <h3 className="mediumText darkBlue">Customer Information</h3>
@@ -367,6 +382,8 @@ function StaffBoard() {
           </div>
         </div>
         <DailyHistory
+          isQueueOpen={staffBoardDetails?.status}
+          openQueue={openQueue}
           staffDetails={staffDetails}
           getNextCustomer={getNextCustomer}
           historyData={dailyHistory || []}

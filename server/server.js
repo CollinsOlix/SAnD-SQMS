@@ -6,6 +6,7 @@ const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
 require("./routes/staffRoute")(app);
 require("./routes/customerRoute")(app);
+require("./routes/adminRoute")(app);
 const {
   getCustomerData,
   fetchBranchesFromDB,
