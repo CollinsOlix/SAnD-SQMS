@@ -4,6 +4,8 @@ import { BrowserRouter, Route, Routes } from "react-router";
 import StaffSignIn from "./pages/StaffSignIn";
 import AdminDashboard from "./pages/AdminDashboard";
 import ServiceCenter from "./pages/ServiceCenter";
+import LocalService from "./pages/LocalService";
+import Afterqrcode from "./pages/afterQrcode";
 import App from "./App";
 import Test from "./pages/Test";
 
@@ -41,6 +43,8 @@ function BaseLayout() {
           <Route path="/admin/:id" element={<AdminDashboard />} />
           <Route path="/sessions/:id" element={<ServiceCenter />} />
           <Route path="/staff/board" element={<StaffBoard />} />
+          <Route path="/local" element={<LocalService />} />
+          <Route path="/qrcode" element={<Afterqrcode />} />
           {/* <Route path="/sessions/:id" element={<OnlineServiceCenter />} /> */}
           <Route path="test" element={<Test />} />
         </Routes>
