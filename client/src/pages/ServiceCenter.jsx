@@ -297,11 +297,11 @@ function ServiceCenter() {
                                   service.serviceName ===
                                   sessionDetails.service[item].serviceName
                               ).lastQueueNumber -
-                                availableServicesInBranch.find(
-                                  (service) =>
-                                    service.serviceName ===
-                                    sessionDetails.service[item].serviceName
-                                ).serviceCurrentNumber) ||
+                              availableServicesInBranch.find(
+                                (service) =>
+                                  service.serviceName ===
+                                  sessionDetails.service[item].serviceName
+                              ).serviceCurrentNumber) ||
                             0,
                         }}
                       />
