@@ -453,13 +453,11 @@ const getWaitingCustomers = async (branch) => {
   try {
     const waitingCustomersRef = await getDocs(q);
     let waitingCustomers = waitingCustomersRef.docs.map((doc) => doc.data());
-    console.log("before sort: ", waitingCustomers);
     waitingCustomers = [];
     waitingCustomersRef.forEach((doc) => {
       if (Object.keys(doc.data().service).length > 0)
         waitingCustomers.push(doc.data());
     });
-    console.log(waitingCustomers);
     return waitingCustomers;
   } catch (err) {
     console.error(err);

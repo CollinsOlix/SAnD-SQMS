@@ -19,14 +19,16 @@
     text-align: center;
     border-radius: 1em;
     width: 70%;
+    h1 {
+      margin: 0;
+      font-size: 7em;
+      color: #3a72da;
+    }
   }
   h3 {
     color: #000;
   }
-  h1 {
-    font-size: 7em;
-    color: #3a72da;
-  }
+
   .timerText {
     font-size: 3em;
     font-weight: 600;
