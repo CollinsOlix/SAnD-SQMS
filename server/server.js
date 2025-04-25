@@ -7,6 +7,7 @@ const cookieParser = require("cookie-parser");
 require("./routes/staffRoute")(app);
 require("./routes/customerRoute")(app);
 require("./routes/adminRoute")(app);
+require("./routes/testRoute")(app);
 const {
   getCustomerData,
   fetchBranchesFromDB,
@@ -197,10 +198,7 @@ app.post("/join-queue", async (request, response) => {
   response.json(joinQueue);
 });
 
-app.get("/test", async (request, response) => {
-  await testUpdate();
-  response.send("Test");
-});
+
 
 app.get("/set-branch", async (request, response) => {
   // let isBranchSet = await setBranchDefaultValues(
