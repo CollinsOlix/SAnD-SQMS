@@ -21,13 +21,24 @@ body {
     background-color: #12326e;
 }
 
+.local-header {
+    margin-left: 150px;
+    color: white;
+
+    h1 {
+        margin-left: 150px;
+        margin-top: 40px;
+        font-size: 25px;
+    }
+}
+
 .select {
     border: none;
     width: 40%;
     height: 45px;
-    margin-top: 50px;
+    margin: 50px 20px;
     background-color: rgb(255, 255, 255);
-    margin-left: 150px;
+    /* margin-left: 150px;  */
     border-radius: 15px;
 
 
@@ -38,8 +49,8 @@ body {
     border: none;
     flex: 1;
     background-color: #3A72DA;
-    margin: -20px;
-    margin-left: 50px;
+    margin: 20px;
+    /* margin-left: 50px; */
     width: 260px;
     height: 385px;
     border-radius: 20px;
@@ -66,10 +77,4 @@ body {
 .box-container {
     text-align: center;
     margin: 50px
-}
-
-h1 {
-    margin-left: 150px;
-    margin-top: 40px;
-    font-size: 25px;
 }

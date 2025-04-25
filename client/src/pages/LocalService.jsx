@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import '../styles/localservice.css';
 import { QRCodeSVG } from "qrcode.react";
+import BackDrop from '../components/BackDrop';
 
 
 
@@ -31,7 +32,7 @@ function Box() {
             <div style={{ marginTop: "-10px", fontSize: "100px" }}><b>00</b></div>
             <br />
             < QRCodeSVG
-                value="https://example.com"
+                value="http://172.20.27.0:5000/qrcode"
                 style={{ marginTop: '-40px', width: '100px', height: '100px' }} />
             <br />
             <p style={{ marginTop: '10px', fontSize: "12px" }}><b>Scan the qrCode to join the queue</b></p>
@@ -41,17 +42,20 @@ function Box() {
 }
 const App = () => {
     return (
-        <div className='app'>
+        <BackDrop>
 
-            <div style={{ marginleft: "150px", color: "white" }}><h1 >SAnD's Smart Queue Management System</h1></div>
+            {/* <div className='app'> */}
+
+            {/* <div className='local-header'><h1>SAnD's Smart Queue Management System</h1></div> */}
             <Select />
-            <div style={{ display: 'flex' }}>
+            <div style={{ display: 'flex', width: "100%", justifyContent: "space-evenly" }}>
                 <div className='osc-box'><Box /></div>
                 <div className='osc-box'><Box /></div>
                 <div className='osc-box'><Box /></div>
                 <div className='osc-box'><Box /></div>
             </div>
-        </div>
+            {/* </div> */}
+        </BackDrop>
     );
 };
 
