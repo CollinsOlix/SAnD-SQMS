@@ -64,6 +64,7 @@ const actionServices = [
               }}
             />
           ),
+          action: "Remove a Service",
           onClick: addBranch,
           requiresSuperAdmin: false,
         },
@@ -165,6 +166,7 @@ const actionServices = [
               }}
             />
           ),
+          action: "Branch Analytics",
           onClick: addBranch,
           requiresSuperAdmin: false,
         },

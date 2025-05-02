@@ -1,4 +1,5 @@
 import React, {
+  useCallback,
   useContext,
   useEffect,
   useLayoutEffect,
@@ -12,6 +13,12 @@ import Services from "../components/Services";
 import { useNavigate, useParams } from "react-router";
 import Modal from "react-modal";
 import AppContext from "../includes/context";
+import { Ring } from "@uiball/loaders";
+import {
+  fetchAnalytics,
+  getServiceDetails,
+  getServicesInBranch,
+} from "../includes/serverFunctions";
 
 function AdminDashboard() {
   let { id } = useParams();
@@ -19,6 +26,18 @@ function AdminDashboard() {
   const { setStaffDetails, staffDetails, SERVER_URL } = useContext(AppContext);
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [activeModal, setActiveModal] = useState("");
+  const [shouldDisplayLoadingAnimation, setShouldDisplayLoadingAnimation] =
+    useState(true);
+  const [availableBranches, setAvailableBranches] = useState();
+  const fetchBranches = useCallback(async () => {
+    console.log("Fetvhing banches");
+    await fetch(`${SERVER_URL}/get-branches`)
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("Fetched banches");
+        setAvailableBranches((e) => (e = data));
+      });
+  }, [SERVER_URL]);
 
   //
   const isStaffSignedIn = async () => {
@@ -29,8 +48,11 @@ function AdminDashboard() {
       .then((response) => response.json())
       .then((data) => {
         if (data.staffSignedIn === true) {
-          console.log(data);
+          if (data.staffDetails.staffType !== "admin") {
+            navigate("/staff/board");
+          } else console.log(data);
           setStaffDetails((e) => (e = data.staffDetails));
+          setShouldDisplayLoadingAnimation(false);
         } else {
           navigate("/staff");
         }
@@ -165,19 +187,40 @@ function AdminDashboard() {
   };
   const NewServiceModal = () => {
     const serviceNameRef = useRef();
-    const branchNameRef = useRef();
+    const branchNameRef = useRef(
+      !staffDetails.superAdmin && staffDetails.branch
+    );
+    const [btnDisabled, setBtnDisabled] = useState("");
+    const [responseMessage, setResponseMessage] = useState();
+
     const addNewService = async () => {
-      await fetch(`${SERVER_URL}/admin/new-service`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: {
-          serviceName: serviceNameRef.current.value,
-          branch: staffDetails.branch,
-        },
+      console.log({
+        service: serviceNameRef.current.value,
+        branch: staffDetails.superAdmin
+          ? branchNameRef.current.value
+          : staffDetails.branch,
       });
+      try {
+        await fetch(`${SERVER_URL}/admin/new-service`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            service: serviceNameRef.current.value,
+            branch: staffDetails.superAdmin
+              ? branchNameRef.current.value
+              : staffDetails.branch,
+          }),
+        })
+          .then((response) => response.json())
+          .then((data) => setResponseMessage((e) => (e = data)));
+      } catch (err) {
+        console.error("Err: ", err);
+      } finally {
+        setTimeout(() => setResponseMessage((e) => (e = null)), 3000);
+      }
     };
     return (
       <div style={{ width: "100%" }}>
@@ -204,6 +247,17 @@ function AdminDashboard() {
           </span>
         </div>
         <form>
+          {responseMessage && (
+            <div
+              style={{
+                border: "2px solid #3a72da",
+                margin: "10px 0",
+                borderRadius: "0.3em",
+              }}
+            >
+              <p style={{ textAlign: "center" }}>{responseMessage}</p>
+            </div>
+          )}
           <label htmlFor="serviceName">Name of Service (required)</label>
           <br />
           <input
@@ -212,25 +266,219 @@ function AdminDashboard() {
             id="serviceName"
             className="adminDashInput"
             required
+            onChange={() => {
+              setBtnDisabled(serviceNameRef.current.value);
+            }}
           />
           <label htmlFor="branchName">Select a branch</label>
           <br />
-          <select
-            ref={branchNameRef}
-            className="adminDashInput"
-            disabled={!staffDetails.superAdmin}
-          >
-            <option>{staffDetails.branch}</option>
-          </select>
+          {!staffDetails.superAdmin ? (
+            <select
+              ref={branchNameRef}
+              className="adminDashInput"
+              disabled={!staffDetails.superAdmin}
+            >
+              <option>{staffDetails.branch}</option>
+            </select>
+          ) : (
+            <select
+              ref={branchNameRef}
+              className="adminDashInput"
+              disabled={!staffDetails.superAdmin}
+            >
+              {availableBranches.map((item, k) => (
+                <option key={k}>{item.branchName}</option>
+              ))}
+            </select>
+          )}
         </form>
-        <button
-          disabled={!serviceNameRef.current?.value}
-          onClick={() => {
-            console.log("service ref: ", serviceNameRef.current.value);
-          }}
-        >
+        <button disabled={!btnDisabled} onClick={addNewService}>
           Add this Service
         </button>
+      </div>
+    );
+  };
+  const RemoveServiceModal = () => {
+    const [serviceState, setServiceState] = useState([]);
+    const fetchServices = async () => {
+      console.log(branchNameRef.current.value);
+      let serviceDeets = await getServicesInBranch(branchNameRef.current.value);
+      setServiceState((e) => (e = serviceDeets));
+    };
+    const serviceNameRef = useRef();
+    const branchNameRef = useRef(
+      !staffDetails.superAdmin && staffDetails.branch
+    );
+    useEffect(() => {
+      fetchServices();
+    }, []);
+    const [btnDisabled, setBtnDisabled] = useState("");
+    const [responseMessage, setResponseMessage] = useState();
+
+    const removeService = async () => {
+      console.log({
+        service: serviceNameRef.current.value,
+        branch: staffDetails.superAdmin
+          ? branchNameRef.current.value
+          : staffDetails.branch,
+      });
+      try {
+        await fetch(`${SERVER_URL}/admin/remove-service`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            service: serviceNameRef.current.value,
+            branch: staffDetails.superAdmin
+              ? branchNameRef.current.value
+              : staffDetails.branch,
+          }),
+        })
+          .then((response) => response.json())
+          .then((data) => setResponseMessage((e) => (e = data)));
+      } catch (err) {
+        console.error("Err: ", err);
+      } finally {
+        setTimeout(() => setResponseMessage((e) => (e = null)), 3000);
+      }
+    };
+    return (
+      <div style={{ width: "100%" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "1em",
+          }}
+        >
+          <h3>Remove a Service</h3>
+          <span
+            onClick={() => setIsModalOpen(false)}
+            style={{
+              cursor: "pointer",
+              padding: "0.3em 0.5em",
+              backgroundColor: "#12326e",
+              color: "white",
+              borderRadius: "10%",
+            }}
+          >
+            close
+          </span>
+        </div>
+        <form>
+          {responseMessage && (
+            <div
+              style={{
+                border: "2px solid #3a72da",
+                margin: "10px 0",
+                borderRadius: "0.3em",
+              }}
+            >
+              <p style={{ textAlign: "center" }}>{responseMessage}</p>
+            </div>
+          )}
+          <label htmlFor="branchName">Select a branch</label>
+          <br />
+          {!staffDetails.superAdmin ? (
+            <select
+              ref={branchNameRef}
+              className="adminDashInput"
+              disabled={!staffDetails.superAdmin}
+            >
+              <option>{staffDetails.branch}</option>
+            </select>
+          ) : (
+            <select
+              onChange={(e) => {
+                fetchServices();
+              }}
+              ref={branchNameRef}
+              className="adminDashInput"
+              disabled={!staffDetails.superAdmin}
+            >
+              {availableBranches.map((item, k) => (
+                <option key={k}>{item.branchName}</option>
+              ))}
+            </select>
+          )}
+          <br />
+          <label htmlFor="serviceName">Select a service</label>
+          <br />
+          <select ref={serviceNameRef} className="adminDashInput">
+            {serviceState.map((item) => (
+              <option>{item.serviceName}</option>
+            ))}
+          </select>
+        </form>
+        <button onClick={removeService}>Remove this Service</button>
+      </div>
+    );
+  };
+  const BranchAnalyticsModal = () => {
+    const [responseMessage, setResponseMessage] = useState();
+    const [serviceState, setServiceState] = useState([]);
+    const fetchServices = async () => {
+      console.log(branchNameRef.current.value);
+      let serviceDeets = await getServicesInBranch(branchNameRef.current.value);
+      setServiceState((e) => (e = serviceDeets));
+    };
+    const serviceNameRef = useRef();
+    const branchNameRef = useRef(
+      !staffDetails.superAdmin && staffDetails.branch
+    );
+    useEffect(() => {
+      // fetchBranches();
+      fetchAnalytics();
+    }, []);
+    const [btnDisabled, setBtnDisabled] = useState("");
+
+    return (
+      <div style={{ width: "100%" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "1em",
+          }}
+        >
+          <h3>Branch Analytics</h3>
+          <span
+            onClick={() => setIsModalOpen(false)}
+            style={{
+              cursor: "pointer",
+              padding: "0.3em 0.5em",
+              backgroundColor: "#12326e",
+              color: "white",
+              borderRadius: "10%",
+            }}
+          >
+            close
+          </span>
+        </div>
+        <form>
+          {responseMessage && (
+            <div
+              style={{
+                border: "2px solid #3a72da",
+                margin: "10px 0",
+                borderRadius: "0.3em",
+              }}
+            >
+              <p style={{ textAlign: "center" }}>{responseMessage}</p>
+            </div>
+          )}
+        </form>
+        <label htmlFor="branchName"></label>
+        <select ref={branchNameRef} className="adminDashInput">
+          {availableBranches.map((item, index) => (
+            <option key={item.branchName + index}>{item.branchName}</option>
+          ))}
+        </select>
+        <button onClick={() => {}}>Remove this Service</button>
       </div>
     );
   };
@@ -242,6 +490,10 @@ function AdminDashboard() {
         return <NewQueueModal />;
       case "Add a Service":
         return <NewServiceModal />;
+      case "Remove a Service":
+        return <RemoveServiceModal />;
+      case "Branch Analytics":
+        return <BranchAnalyticsModal />;
       default:
         return <EmptyModal />;
     }
@@ -265,8 +517,26 @@ function AdminDashboard() {
 
   useEffect(() => {}, [id, activeModal]);
   // ...
+  useEffect(() => {
+    if (staffDetails?.superAdmin) fetchBranches();
+  }, [staffDetails]);
 
-  return (
+  return shouldDisplayLoadingAnimation ? (
+    <div
+      style={{
+        position: "fixed",
+        zIndex: 99,
+        inset: 0,
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+      <Ring size={80} lineWeight={5} speed={1} color="white" />
+    </div>
+  ) : (
     <BackDrop showNavTabs={true}>
       <div
         style={{

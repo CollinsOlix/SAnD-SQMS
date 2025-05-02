@@ -11,6 +11,7 @@ import "../styles/home.css";
 import Board from "../components/Board";
 import { useNavigate } from "react-router";
 import AppContext from "../includes/context";
+import { getServicesInBranch } from "../includes/serverFunctions";
 
 function Home() {
   const navigate = useNavigate();
@@ -33,7 +34,7 @@ function Home() {
     async (id) => {
       fetch(`${SERVER_URL}/get-sessions`, {
         method: "POST",
-        credentials: "include",
+
         body: JSON.stringify({ sessionId: id }),
         headers: {
           "Content-Type": "application/json",
@@ -53,25 +54,13 @@ function Home() {
       });
   }, [SERVER_URL]);
 
-  const fetchServices = async (branch) => {
-    await fetch(`${SERVER_URL}/get-services`, {
-      method: "POST",
-      credentials: "include",
-      body: JSON.stringify({ branch: branch }),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("Avail Services: ", data);
-        setAvailableServices(data);
-        setService(
-          (e) =>
-            (e = data.find((item) => item?.status !== "closed").serviceName)
-        );
-        return data;
-      });
+  const fetchServices = async (selectedBranch) => {
+    let allServices = await getServicesInBranch(selectedBranch);
+    setAvailableServices(allServices);
+    setService(
+      (e) =>
+        (e = allServices.find((item) => item?.status !== "closed").serviceName)
+    );
   };
   const userHasSession = useCallback(async () => {
     await fetch(`${SERVER_URL}/`, {

@@ -16,7 +16,6 @@ const {
   createNewSession,
   fetchServices,
   joinServiceQueue,
-  testUpdate,
 } = require("./config/firestoreFunctions");
 const PORT = 5000;
 
@@ -27,13 +26,43 @@ let trials = 0;
 app.use(express.json({ type: "application/json" }));
 
 //
+//
+var whitelist = [
+  "http://localhost:3000",
+  "https://sdnxn5zx-3000.euw.devtunnels.ms", // Ensure this matches the exact URL in the request headers
+];
+var corsOptions = {
+  origin: function (origin, callback) {
+    // console.log("Origin: ", origin); // Debug log
+    if (!origin || whitelist.includes(origin)) {
+      callback(null, true); // Allow requests from whitelist or no origin (e.g., server-side proxy)
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  headers: ["Content-Type", "Authorization"],
+  maxAge: 84600,
+};
+
+app.use(cors(corsOptions));
+
+//
 //CORS policies
-app.use(
-  cors({
-    origin: "http://localhost:3000",
-    credentials: true,
-  })
-);
+// app.options("*", cors(corsOptions)); // Handle preflight requests
+
+// app.use((req, res, next) => {
+//   res.header(
+//     "Access-Control-Allow-Origin",
+//     "https://sdnxn5zx-3000.euw.devtunnels.ms"
+//   );
+//   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+//   res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+//   res.header("Access-Control-Allow-Credentials", "true");
+//   res.header("Access-Control-Max-Age", "86400");
+//   next();
+// });
 
 //Route to send customer details to
 app.post("/", async (request, response) => {
@@ -44,7 +73,9 @@ app.post("/", async (request, response) => {
   //for too many times
 
   if (trials >= 7) {
-    response.json("Too many incorrect attempts");
+    response
+      .setHeader("Access-Control-Allow-Origin", `${request.headers.origin}`)
+      .json("Too many incorrect attempts");
     return;
   }
 
@@ -52,25 +83,31 @@ app.post("/", async (request, response) => {
   //Confirm customer entered a valid number
   if (customerNumber.length != 5) {
     ++trials;
-    response.json("Invalid First Name or Customer Number");
+    response
+      .setHeader("Access-Control-Allow-Origin", `${request.headers.origin}`)
+      .json("Invalid First Name or Customer Number");
     return;
   }
   //
   //Confirm customer provided a proper name
   if (typeof firstName !== "string" || firstName.trim().length < 2) {
     ++trials;
-    response.json("Invalid First Name or Customer Number");
+    response
+      .setHeader("Access-Control-Allow-Origin", `${request.headers.origin}`)
+      .json("Invalid First Name or Customer Number");
   } else {
     try {
       customerNumber = `${customerNumber}`;
 
       const customerDetails = await getCustomerData(customerNumber, firstName);
       if (typeof customerDetails === "string") {
-        response.json({
-          customerDetails,
-          signedIn: typeof customerDetails === "string" ? false : true,
-          sessionId: newSessionId,
-        });
+        response
+          .setHeader("Access-Control-Allow-Origin", `${request.headers.origin}`)
+          .json({
+            customerDetails,
+            signedIn: typeof customerDetails === "string" ? false : true,
+            sessionId: newSessionId,
+          });
       }
       const newSessionId = await createNewSession(
         customerNumber,
@@ -89,12 +126,14 @@ app.post("/", async (request, response) => {
         },
         process.env.JWTSECRET
       );
-      response.cookie("sqms", secretToken, {
-        maxAge: Math.floor(Date.now() / 1000) + 60 * 60 * 24,
-        httpOnly: true,
-        sameSite: "strict",
-        secure: true,
-      });
+      response
+        .setHeader("Access-Control-Allow-Origin", `${request.headers.origin}`)
+        .cookie("sqms", secretToken, {
+          maxAge: Math.floor(Date.now() / 1000) + 60 * 60 * 24,
+          httpOnly: true,
+          sameSite: "strict",
+          secure: true,
+        });
 
       response.json({
         customerDetails,
@@ -110,7 +149,9 @@ app.post("/", async (request, response) => {
 app.get("/updateService", async (request, response) => {
   // const { index, branch } = request.query;
   // const jees = await updateServiceQueueNumber("Apex Bank ( Girne )", 0);
-  response.json("Empty Route");
+  response
+    .setHeader("Access-Control-Allow-Origin", `${request.headers.origin}`)
+    .json("Empty Route");
 });
 
 app.get("/", (request, response) => {
@@ -122,14 +163,19 @@ app.get("/", (request, response) => {
         sessionId: userData.sessionId,
       });
     } catch (err) {
-      response.clearCookie("sqms").json({
-        signedIn: false,
-      });
+      response
+        .setHeader("Access-Control-Allow-Origin", `${request.headers.origin}`)
+        .clearCookie("sqms")
+        .json({
+          signedIn: false,
+        });
     }
   } else {
-    response.json({
-      signedIn: false,
-    });
+    response
+      .setHeader("Access-Control-Allow-Origin", `${request.headers.origin}`)
+      .json({
+        signedIn: false,
+      });
   }
 });
 
@@ -142,13 +188,17 @@ app.get("/user", (request, response) => {
         request.cookies.sqms,
         process.env.JWTSECRET
       );
-      response.json({
-        sessionId: customerData.sessionId,
-        signedIn: customerData ? true : false,
-      });
+      response
+        .setHeader("Access-Control-Allow-Origin", `${request.headers.origin}`)
+        .json({
+          sessionId: customerData.sessionId,
+          signedIn: customerData ? true : false,
+        });
     } catch (err) {
       console.error("JWT Error: ", err);
-      response.clearCookie("sqms");
+      response
+        .setHeader("Access-Control-Allow-Origin", `${request.headers.origin}`)
+        .clearCookie("sqms");
       response.json({
         signedIn: false,
       });
@@ -161,17 +211,23 @@ app.get("/user", (request, response) => {
 app.post("/get-services", async (request, response) => {
   try {
     const services = await fetchServices(request.body.branch);
-    response.json(services);
+    response
+      .setHeader("Access-Control-Allow-Origin", `${request.headers.origin}`)
+      .json(services);
   } catch (err) {
     console.log(err);
-    response.json("Error Fetching Services");
+    response
+      .setHeader("Access-Control-Allow-Origin", `${request.headers.origin}`)
+      .json("Error Fetching Services");
   }
 });
 
 //
 app.get("/get-branches", async (request, response) => {
   const branches = await fetchBranchesFromDB();
-  response.json(branches);
+  response
+    .setHeader("Access-Control-Allow-Origin", `${request.headers.origin}`)
+    .json(branches);
 });
 
 app.get("/add-branch", async (request, response) => {
@@ -184,10 +240,14 @@ app.post("/get-sessions", async (request, response) => {
   const sessions = await getSessions();
   let session = sessions.find((session) => session?.sessionId == sessionId);
   if (!session) {
-    response.json("Session not found");
+    response
+      .setHeader("Access-Control-Allow-Origin", `${request.headers.origin}`)
+      .json("Session not found");
     return;
   }
-  response.json(session);
+  response
+    .setHeader("Access-Control-Allow-Origin", `${request.headers.origin}`)
+    .json(session);
 });
 
 //
@@ -195,18 +255,9 @@ app.post("/get-sessions", async (request, response) => {
 app.post("/join-queue", async (request, response) => {
   const { sessionId, branch, service } = request.body;
   const joinQueue = await joinServiceQueue(sessionId, branch, service);
-  response.json(joinQueue);
+  response
+    .setHeader("Access-Control-Allow-Origin", `${request.headers.origin}`)
+    .json(joinQueue);
 });
 
-
-
-app.get("/set-branch", async (request, response) => {
-  // let isBranchSet = await setBranchDefaultValues(
-  //   "Apex Bank ( Upper Girne )",
-  //   "Account and Card Issues"
-  // );
-  // let isBranchSet = await fetchServices("Apex Bank ( Girne )");
-  let isBranchSet = await getCustomerData("11108", "Marie");
-  response.send(isBranchSet);
-});
 app.listen(PORT, console.log("Listening on PORT ", PORT));

@@ -7,6 +7,7 @@ import Stopwatch from "../components/Stopwatch";
 import DailyHistory from "../components/DailyHistory";
 import printJS from "print-js";
 import { Ring } from "@uiball/loaders";
+import { getServiceDetails } from "../includes/serverFunctions";
 
 function StaffBoard() {
   const {
@@ -69,30 +70,13 @@ function StaffBoard() {
       });
   };
 
-  const getServiceDetails = async () => {
-    if (staffDetails) {
-      try {
-        await fetch(`${SERVER_URL}/staff/get-service-details`, {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            branch: staffDetails.branch,
-            service: staffDetails.assignedTo,
-          }),
-        })
-          .then((response) => response.json())
-          .then(async (data) => {
-            setStaffBoardDetails((e) => (e = data));
-          });
-      } catch (err) {
-        console.error("Error getting service details: ", err);
-      }
-    }
+  const fetchServiceDetails = async () => {
+    let serviceDeets = await getServiceDetails(
+      staffDetails.branch,
+      staffDetails.assignedTo
+    );
+    setStaffBoardDetails((e) => (e = serviceDeets));
   };
-
   const getWaitingCustomers = async (branch) => {
     if (staffDetails) {
       try {
@@ -221,10 +205,10 @@ function StaffBoard() {
             });
           setActiveCustomer((e) => (e = active));
         }
-        await getServiceDetails();
+        await fetchServiceDetails();
         reset();
       });
-    await getServiceDetails();
+    await fetchServiceDetails();
   };
 
   const getDailyHistory = async () => {
@@ -262,7 +246,7 @@ function StaffBoard() {
         branch: staffDetails.branch,
         service: staffDetails.assignedTo,
       }),
-    }).then(async () => await getServiceDetails());
+    }).then(async () => await fetchServiceDetails());
   };
   const openQueue = async () => {
     await fetch(`${SERVER_URL}/staff/open-queue`, {
@@ -275,7 +259,7 @@ function StaffBoard() {
         branch: staffDetails.branch,
         service: staffDetails.assignedTo,
       }),
-    }).then(async () => await getServiceDetails());
+    }).then(async () => await fetchServiceDetails());
   };
 
   useLayoutEffect(() => {
@@ -284,7 +268,7 @@ function StaffBoard() {
 
   useEffect(() => {
     if (staffDetails) {
-      getServiceDetails();
+      fetchServiceDetails();
       getWaitingCustomers(staffDetails.branch);
       getDailyHistory();
     }
@@ -322,8 +306,10 @@ function StaffBoard() {
   }, [staffBoardDetails, waitingCustomers]);
 
   useEffect(() => {
-    activeCustomer?.customerNumber &&
-      setActiveCustomerNumber(activeCustomer.customerNumber);
+    console.log(
+      "active: ",
+      activeCustomer?.service?.[staffDetails?.assignedTo]?.ticketNumber
+    );
   }, [activeCustomer]);
   //
   //Displayed content
@@ -374,7 +360,7 @@ function StaffBoard() {
               Customer Name: {activeCustomer?.customerDetails?.firstName || ""}
             </p>
             <p className="mediumText">
-              Customer Number: {activeCustomerNumber}
+              Customer Number: {activeCustomer?.customerNumber}
             </p>
             {activeCustomer && activeCustomer.priority && (
               <p className="mediumText">Priority Customer</p>

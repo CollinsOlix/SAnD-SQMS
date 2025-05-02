@@ -44,18 +44,30 @@ const QueuePicker = ({ index, item, active, noWaitingNumber }) => {
       >
         {item.ticketNumber}
       </p>
-      <p style={{ fontWeight: "bold", fontSize: "1.3em" }}>
-        There Are Currently
-      </p>
       {!noWaitingNumber && (
-        <p style={{ fontSize: "6em", fontWeight: "bold", fontFamily: "Inter" }}>
-          {item.peopleWaiting}
-        </p>
+        <>
+          <p style={{ fontWeight: "bold", fontSize: "1.3em" }}>
+            There Are Currently
+          </p>
+          <p
+            style={{ fontSize: "6em", fontWeight: "bold", fontFamily: "Inter" }}
+          >
+            {item.peopleWaiting}
+          </p>
+          <p style={{ fontWeight: "bold", fontSize: "1.3em" }}>
+            people waiting
+          </p>
+        </>
       )}
-      <p style={{ fontWeight: "bold", fontSize: "1.3em" }}>people waiting</p>
+      <p style={{ fontWeight: "bold", fontSize: "1.3em" }}>
+        You will be called upon shortly
+      </p>
     </div>
   ) : (
-    <div className="queue-container">
+    <div
+      className="queue-container"
+      style={{ backgroundColor: item.status === "closed" && "gray" }}
+    >
       <h4>{item?.serviceName}</h4>
       <p
         style={{
@@ -67,7 +79,10 @@ const QueuePicker = ({ index, item, active, noWaitingNumber }) => {
       >
         {item.serviceCurrentNumber}
       </p>
-      <div className="icon-container" onClick={joinQueue}>
+      <div
+        className="icon-container"
+        onClick={item.status !== "closed" && joinQueue}
+      >
         <AddIcon
           sx={{
             fontSize: 70,

@@ -27,7 +27,6 @@ function SignInComponent({
     })
       .then((response) => response.json())
       .then((data) => {
-        console.log(data);
         if (data.staffSignedIn) {
           if (data.staffType === "staff") {
             navigate("/staff/board");

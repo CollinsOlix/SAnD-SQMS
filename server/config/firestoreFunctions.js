@@ -24,6 +24,25 @@ const getToday = () => {
   return today;
 };
 
+function getStartOfWeek(inputDate) {
+  const date = new Date(inputDate);
+
+  // Get day of the week (0 - Sunday, 1 - Monday, ..., 6 - Saturday)
+  const day = date.getDay();
+
+  // Calculate how many days to subtract to get Monday
+  // If Sunday (0), shift back 6 days, else shift back (day - 1) days
+  const diff = day === 0 ? -6 : 1 - day;
+
+  // Create new date for Monday
+  const monday = new Date(date);
+  monday.setDate(date.getDate() + diff);
+
+  // Reset time to midnight
+  monday.setHours(0, 0, 0, 0);
+
+  return monday;
+}
 //
 //Firebase firestore functions
 const getCustomerData = async (customerNumber, firstName) => {
@@ -98,6 +117,7 @@ const fetchBranchesFromDB = async () => {
       collection(db, "Organizations", "Apex Bank", "branches")
     );
     let branches = [];
+
     docRef.forEach((doc) => {
       let branchData = doc.data();
       branches.push(branchData);
@@ -108,15 +128,7 @@ const fetchBranchesFromDB = async () => {
   }
 };
 
-const addBranch = async () => {
-  await setDoc(doc(db, "branches", "Test Branch C"), {
-    branchAdminID: 22222,
-    branchID: 3,
-    branchLocation: "Test Location 3",
-    branchName: "Test Branch C",
-    services: ["Acct", "Registratgion"],
-  });
-};
+const addBranch = async () => {};
 
 const getSessions = async () => {
   let sessionData = await getDocs(
@@ -138,19 +150,6 @@ const generateSessionId = async () => {
   }
 
   return newSessionId;
-};
-
-const testUpdate = async () => {
-  await setDoc(
-    doc(db, "Organizations", "Apex Bank", "branches", "Apex Bank ( Girne )"),
-    {
-      "availableServices[1]": {
-        serviceName: "Withdrawals",
-        lastQueueNumber: 200,
-        serviceCurrentNumber: 130,
-      },
-    }
-  );
 };
 
 const updateServiceQueueNumber = async (branch, service) => {
@@ -237,7 +236,7 @@ const incrementServiceQueueNumber = async (branch, service) => {
 };
 
 const setBranchDefaultValues = async (branch, title) => {
-  const branchRef = doc(
+  const serviceRef = doc(
     db,
     "Organizations",
     "Apex Bank",
@@ -246,13 +245,17 @@ const setBranchDefaultValues = async (branch, title) => {
     "availableServices",
     title
   );
-  await setDoc(branchRef, {
-    serviceName: "Account and Card Issues",
-    lastQueueNumber: 1,
-    serviceCurrentNumber: 0,
-  });
+  await setDoc(
+    serviceRef,
+    {
+      serviceName: "Account and Card Issues",
+      lastQueueNumber: 0,
+      serviceCurrentNumber: 0,
+    },
+    { merge: true }
+  );
 
-  const branchData = await getDoc(branchRef);
+  const branchData = await getDoc(serviceRef);
   return branchData.data();
 };
 
@@ -272,7 +275,6 @@ const createNewSession = async (
     (availService) => availService.serviceName === service
   );
 
-  console.log("Customer Type: ", customerDetails);
   //
   //Make it such that if the customer is a priority customer,
   //the session is created with a priority status
@@ -519,7 +521,7 @@ const addSessionToHistory = async (
 };
 
 const createNewService = async (branch, service) => {
-  const servicesRef = collection(
+  const servicesRef = doc(
     db,
     "Organizations",
     "Apex Bank",
@@ -528,15 +530,49 @@ const createNewService = async (branch, service) => {
     "availableServices",
     service
   );
-  await setDoc(servicesRef, {
-    lastQueueNumber: 2,
-    priorityCurrentNumber: 3,
-    priorityCustomersAvailable: true,
-    priorityLastNumber: 10,
-    serviceCurrentNumber: 2,
-    serviceName: service,
-    status: "close",
-  });
+  try {
+    let docExists = await getDoc(servicesRef);
+    if (docExists.exists()) {
+      return "This Service already exists";
+    } else {
+      await setDoc(servicesRef, {
+        lastQueueNumber: 0,
+        priorityCurrentNumber: 0,
+        priorityCustomersAvailable: true,
+        priorityLastNumber: 0,
+        serviceCurrentNumber: 0,
+        serviceName: service,
+        status: "close",
+      });
+      return "Service Created Successfully";
+    }
+  } catch (err) {
+    console.error("Error creating service: ", err);
+    return "Error creating service";
+  }
+};
+const deleteService = async (branch, service) => {
+  const servicesRef = doc(
+    db,
+    "Organizations",
+    "Apex Bank",
+    "branches",
+    branch,
+    "availableServices",
+    service
+  );
+  try {
+    let docExists = await getDoc(servicesRef);
+    if (docExists.exists()) {
+      await deleteDoc(servicesRef);
+      return "Service Deleted Successfully";
+    } else {
+      return "Service Does Not Exist";
+    }
+  } catch (err) {
+    console.error("Error Deleting Service: ", err);
+    return "Error Deleting Service";
+  }
 };
 
 const closeQueue = async (branch, service) => {
@@ -720,14 +756,99 @@ const deleteAllHistory = async (branch) => {
   await deleteFunc();
   return historyDocs;
 };
+
+const setPriorityWaitTo = async (branch, to) => {
+  const branchRef = doc(db, "Organizations", "Apex Bank", "branches", branch);
+  await setDoc(branchRef, { numberOfPeopleBeforeVIP: to }, { merge: true });
+};
+
+const initializeBranch = async (branch) => {
+  const branchRef = doc(db, "Organizations", "Apex Bank", "branches", branch);
+  await setDoc(
+    branchRef,
+    {
+      numberOfPeopleBeforeVIP: 3,
+      priorityMaxWait: 3,
+    },
+    { merge: true }
+  );
+};
+const initializeService = async (branch, service) => {
+  const servicesRef = doc(
+    db,
+    "Organizations",
+    "Apex Bank",
+    "branches",
+    branch,
+    "availableServices",
+    service
+  );
+  await setDoc(
+    servicesRef,
+    {
+      lastQueueNumber: 0,
+      priorityCurrentNumber: 0,
+      priorityCustomersAvailable: true,
+      priorityLastNumber: 0,
+      serviceCurrentNumber: 0,
+      status: "close",
+    },
+    { merge: true }
+  );
+};
+
+const getStaffInBranch = async (branch) => {
+  const staffRef = collection(db, "Organizations", "Apex Bank", "staff");
+  const staffQuery = query(staffRef, where("branch", "==", branch));
+  let staff = await getDocs(staffQuery);
+  let allDocs = [];
+  allDocs = staff.docs.map((doc) => doc.data());
+  allDocs.forEach((doc) => {
+    doc.password = "***";
+  });
+  console.log(allDocs);
+  return allDocs;
+};
+
+const getHistory = async (branch, date1 = new Date()) => {
+  const historyRef = collection(
+    db,
+    "Organizations",
+    "Apex Bank",
+    "branches",
+    branch,
+    "history"
+  );
+
+  const q = query(
+    historyRef,
+    where("date", ">=", getStartOfWeek(date1)),
+    where("date", "<=", date1)
+  );
+  //get date of the starting day of this week in js?
+
+  const historySnapshot = await getDocs(q);
+  let allDocs = [];
+  allDocs = historySnapshot.docs.map((doc) => doc.data());
+  return allDocs;
+};
+
+const fetchBranchAnalytics = async (branch, service, date1) => {
+  // let staff = await getStaffInBranch(branch);
+  await initializeBranch(branch);
+  await initializeService(branch, service);
+  let history = await getHistory(branch, date1);
+
+  return history;
+};
 module.exports = {
   addBranch,
   openQueue,
-  testUpdate,
   closeQueue,
   endSession,
   getSessions,
   getStaffData,
+  deleteService,
   getBranchInfo,
   fetchServices,
   getCustomerData,
@@ -735,17 +856,21 @@ module.exports = {
   createNewService,
   deleteAllHistory,
   joinServiceQueue,
+  initializeBranch,
   createNewSession,
+  setPriorityWaitTo,
   getServiceDetails,
+  initializeService,
   generateSessionId,
   getWaitingCustomers,
   fetchBranchesFromDB,
   addSessionToHistory,
+  fetchBranchAnalytics,
   getPriorityCustomers,
   setBranchDefaultValues,
   updateServiceQueueNumber,
   updatePriorityQueueDetails,
   setCustomerServiceToHandled,
-  setPriorityCustomersNotAvailable,
   decrementPriorityWaitingNumber,
+  setPriorityCustomersNotAvailable,
 };

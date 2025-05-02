@@ -17,6 +17,8 @@ const {
   setCustomerServiceToHandled,
   updatePriorityQueueDetails,
   deleteAllHistory,
+  closeQueue,
+  setPriorityWaitTo,
 } = require("../config/firestoreFunctions");
 
 module.exports = function (app) {
@@ -143,19 +145,30 @@ module.exports = function (app) {
     let waitingCustomers = await getWaitingCustomers(branch);
     let branchData = await getBranchInfo(branch);
     let serviceData = await getServiceDetails(branch, service);
+    console.log(
+      "Prio: ",
+      priorityCustomers.length,
+      " Normies: ",
+      waitingCustomers.length
+    );
+    console.log("B: ", branchData, " S: ", serviceData);
     if (serviceData.priorityCustomersAvailable) {
-      if (
-        branchData.numberOfPeopleBeforeVIP > 0 &&
-        waitingCustomers.length > 0
-      ) {
-        await decrementPriorityWaitingNumber(branch);
-      } else {
-        if (priorityCustomers.length > 0) {
+      if (branchData.numberOfPeopleBeforeVIP > 0) {
+        if (waitingCustomers.length > 0) {
+          await decrementPriorityWaitingNumber(branch);
+        } else {
+          await setPriorityWaitTo(branch, 0);
           response.json({
             sessionHistory,
             waitingCustomers: priorityCustomers,
           });
         }
+      } else {
+        //send the list of people waiting in priority
+        response.json({
+          sessionHistory,
+          waitingCustomers: priorityCustomers,
+        });
       }
     } else if (!serviceData.priorityCustomersAvailable) {
       response.json({ sessionHistory, waitingCustomers });
@@ -201,7 +214,6 @@ module.exports = function (app) {
     //   "Apex Bank ( Girne )",
     //   "Account and Card Issues"
     // );
-    // let data = await deleteAllHistory("Apex Bank ( Girne )");
     response.json(data);
   });
 };
