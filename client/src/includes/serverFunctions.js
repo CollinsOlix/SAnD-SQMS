@@ -48,6 +48,6 @@ export const getServicesInBranch = async (branch) => {
   }
 };
 
-export const fetchBranchAnalytics = async () => {
+export const fetchAnalytics = async () => {
   await fetch(`${SERVER_URL}/admin/analytics/branch`);
 };

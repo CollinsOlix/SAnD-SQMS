@@ -478,7 +478,7 @@ function AdminDashboard() {
             <option key={item.branchName + index}>{item.branchName}</option>
           ))}
         </select>
-        <button onClick={() => {}}>Remove this Service</button>
+        <button onClick={() => { }}>Remove this Service</button>
       </div>
     );
   };
@@ -515,7 +515,7 @@ function AdminDashboard() {
     isStaffSignedIn();
   }, []);
 
-  useEffect(() => {}, [id, activeModal]);
+  useEffect(() => { }, [id, activeModal]);
   // ...
   useEffect(() => {
     if (staffDetails?.superAdmin) fetchBranches();
@@ -576,25 +576,25 @@ function AdminDashboard() {
                 <div className="actionButtonsContainer">
                   {staffDetails?.superAdmin
                     ? Object.values(service)[0].map((option, index) => (
-                        <Services
-                          option={option}
-                          key={index}
-                          setIsModalOpen={setIsModalOpen}
-                          setActiveModal={setActiveModal}
-                        />
-                      ))
+                      <Services
+                        option={option}
+                        key={index}
+                        setIsModalOpen={setIsModalOpen}
+                        setActiveModal={setActiveModal}
+                      />
+                    ))
                     : Object.values(service)[0].map(
-                        (option, index) =>
-                          !option[Object.keys(option)[0]]
-                            .requiresSuperAdmin && (
-                            <Services
-                              option={option}
-                              key={index}
-                              setIsModalOpen={setIsModalOpen}
-                              setActiveModal={setActiveModal}
-                            />
-                          )
-                      )}
+                      (option, index) =>
+                        !option[Object.keys(option)[0]]
+                          .requiresSuperAdmin && (
+                          <Services
+                            option={option}
+                            key={index}
+                            setIsModalOpen={setIsModalOpen}
+                            setActiveModal={setActiveModal}
+                          />
+                        )
+                    )}
                 </div>
               </div>
             );
