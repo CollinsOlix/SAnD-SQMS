@@ -340,6 +340,8 @@ function AdminDashboard() {
             staffDetails={staffDetails}
           />
         );
+      case "Test":
+        return <></>;
       default:
         return <EmptyModal />;
     }
@@ -378,7 +380,7 @@ function AdminDashboard() {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        overflow: "hidden"
+        overflow: "hidden",
       }}
     >
       <Ring size={80} lineWeight={5} speed={1} color="white" />
