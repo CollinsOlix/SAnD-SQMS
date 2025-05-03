@@ -14,11 +14,9 @@ import { useNavigate, useParams } from "react-router";
 import Modal from "react-modal";
 import AppContext from "../includes/context";
 import { Ring } from "@uiball/loaders";
-import {
-  fetchAnalytics,
-  getServiceDetails,
-  getServicesInBranch,
-} from "../includes/serverFunctions";
+import BranchAnalyticsModal from "../components/BranchAnalyticsModal";
+import RemoveServiceModal from "../components/RemoveServiceModal";
+import StaffAnalyticsModal from "../components/StaffAnalyticsModal";
 
 function AdminDashboard() {
   let { id } = useParams();
@@ -29,15 +27,25 @@ function AdminDashboard() {
   const [shouldDisplayLoadingAnimation, setShouldDisplayLoadingAnimation] =
     useState(true);
   const [availableBranches, setAvailableBranches] = useState();
-  const fetchBranches = useCallback(async () => {
-    console.log("Fetvhing banches");
+
+  //
+  //
+  const fetchBranches = async () => {
+    console.log("Staff det: ", staffDetails);
     await fetch(`${SERVER_URL}/get-branches`)
       .then((response) => response.json())
       .then((data) => {
-        console.log("Fetched banches");
-        setAvailableBranches((e) => (e = data));
+        console.log("Fetched banches: ", data);
+        if (staffDetails?.superAdmin) {
+          setAvailableBranches((e) => (e = data));
+        } else {
+          console.log("Staff Details: ", staffDetails);
+          setAvailableBranches((e) => [
+            (e = data.find((item) => item.branchName === staffDetails?.branch)),
+          ]);
+        }
       });
-  }, [SERVER_URL]);
+  };
 
   //
   const isStaffSignedIn = async () => {
@@ -51,6 +59,7 @@ function AdminDashboard() {
           if (data.staffDetails.staffType !== "admin") {
             navigate("/staff/board");
           } else console.log(data);
+          console.log("Staff: ", data);
           setStaffDetails((e) => (e = data.staffDetails));
           setShouldDisplayLoadingAnimation(false);
         } else {
@@ -298,190 +307,7 @@ function AdminDashboard() {
       </div>
     );
   };
-  const RemoveServiceModal = () => {
-    const [serviceState, setServiceState] = useState([]);
-    const fetchServices = async () => {
-      console.log(branchNameRef.current.value);
-      let serviceDeets = await getServicesInBranch(branchNameRef.current.value);
-      setServiceState((e) => (e = serviceDeets));
-    };
-    const serviceNameRef = useRef();
-    const branchNameRef = useRef(
-      !staffDetails.superAdmin && staffDetails.branch
-    );
-    useEffect(() => {
-      fetchServices();
-    }, []);
-    const [btnDisabled, setBtnDisabled] = useState("");
-    const [responseMessage, setResponseMessage] = useState();
 
-    const removeService = async () => {
-      console.log({
-        service: serviceNameRef.current.value,
-        branch: staffDetails.superAdmin
-          ? branchNameRef.current.value
-          : staffDetails.branch,
-      });
-      try {
-        await fetch(`${SERVER_URL}/admin/remove-service`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            service: serviceNameRef.current.value,
-            branch: staffDetails.superAdmin
-              ? branchNameRef.current.value
-              : staffDetails.branch,
-          }),
-        })
-          .then((response) => response.json())
-          .then((data) => setResponseMessage((e) => (e = data)));
-      } catch (err) {
-        console.error("Err: ", err);
-      } finally {
-        setTimeout(() => setResponseMessage((e) => (e = null)), 3000);
-      }
-    };
-    return (
-      <div style={{ width: "100%" }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "1em",
-          }}
-        >
-          <h3>Remove a Service</h3>
-          <span
-            onClick={() => setIsModalOpen(false)}
-            style={{
-              cursor: "pointer",
-              padding: "0.3em 0.5em",
-              backgroundColor: "#12326e",
-              color: "white",
-              borderRadius: "10%",
-            }}
-          >
-            close
-          </span>
-        </div>
-        <form>
-          {responseMessage && (
-            <div
-              style={{
-                border: "2px solid #3a72da",
-                margin: "10px 0",
-                borderRadius: "0.3em",
-              }}
-            >
-              <p style={{ textAlign: "center" }}>{responseMessage}</p>
-            </div>
-          )}
-          <label htmlFor="branchName">Select a branch</label>
-          <br />
-          {!staffDetails.superAdmin ? (
-            <select
-              ref={branchNameRef}
-              className="adminDashInput"
-              disabled={!staffDetails.superAdmin}
-            >
-              <option>{staffDetails.branch}</option>
-            </select>
-          ) : (
-            <select
-              onChange={(e) => {
-                fetchServices();
-              }}
-              ref={branchNameRef}
-              className="adminDashInput"
-              disabled={!staffDetails.superAdmin}
-            >
-              {availableBranches.map((item, k) => (
-                <option key={k}>{item.branchName}</option>
-              ))}
-            </select>
-          )}
-          <br />
-          <label htmlFor="serviceName">Select a service</label>
-          <br />
-          <select ref={serviceNameRef} className="adminDashInput">
-            {serviceState.map((item) => (
-              <option>{item.serviceName}</option>
-            ))}
-          </select>
-        </form>
-        <button onClick={removeService}>Remove this Service</button>
-      </div>
-    );
-  };
-  const BranchAnalyticsModal = () => {
-    const [responseMessage, setResponseMessage] = useState();
-    const [serviceState, setServiceState] = useState([]);
-    const fetchServices = async () => {
-      console.log(branchNameRef.current.value);
-      let serviceDeets = await getServicesInBranch(branchNameRef.current.value);
-      setServiceState((e) => (e = serviceDeets));
-    };
-    const serviceNameRef = useRef();
-    const branchNameRef = useRef(
-      !staffDetails.superAdmin && staffDetails.branch
-    );
-    useEffect(() => {
-      // fetchBranches();
-      fetchAnalytics();
-    }, []);
-    const [btnDisabled, setBtnDisabled] = useState("");
-
-    return (
-      <div style={{ width: "100%" }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "1em",
-          }}
-        >
-          <h3>Branch Analytics</h3>
-          <span
-            onClick={() => setIsModalOpen(false)}
-            style={{
-              cursor: "pointer",
-              padding: "0.3em 0.5em",
-              backgroundColor: "#12326e",
-              color: "white",
-              borderRadius: "10%",
-            }}
-          >
-            close
-          </span>
-        </div>
-        <form>
-          {responseMessage && (
-            <div
-              style={{
-                border: "2px solid #3a72da",
-                margin: "10px 0",
-                borderRadius: "0.3em",
-              }}
-            >
-              <p style={{ textAlign: "center" }}>{responseMessage}</p>
-            </div>
-          )}
-        </form>
-        <label htmlFor="branchName"></label>
-        <select ref={branchNameRef} className="adminDashInput">
-          {availableBranches.map((item, index) => (
-            <option key={item.branchName + index}>{item.branchName}</option>
-          ))}
-        </select>
-        <button onClick={() => {}}>Remove this Service</button>
-      </div>
-    );
-  };
   const renderModal = () => {
     switch (activeModal) {
       case "Add Branch":
@@ -491,9 +317,29 @@ function AdminDashboard() {
       case "Add a Service":
         return <NewServiceModal />;
       case "Remove a Service":
-        return <RemoveServiceModal />;
+        return (
+          <RemoveServiceModal
+            setIsModalOpen={setIsModalOpen}
+            staffDetails={staffDetails}
+            availableBranches={availableBranches}
+          />
+        );
       case "Branch Analytics":
-        return <BranchAnalyticsModal />;
+        return (
+          <BranchAnalyticsModal
+            staffDetails={staffDetails}
+            availableBranches={availableBranches}
+            setIsModalOpen={setIsModalOpen}
+          />
+        );
+      case "View Staff Analytics":
+        return (
+          <StaffAnalyticsModal
+            setIsModalOpen={setIsModalOpen}
+            availableBranches={availableBranches}
+            staffDetails={staffDetails}
+          />
+        );
       default:
         return <EmptyModal />;
     }
@@ -518,7 +364,7 @@ function AdminDashboard() {
   useEffect(() => {}, [id, activeModal]);
   // ...
   useEffect(() => {
-    if (staffDetails?.superAdmin) fetchBranches();
+    fetchBranches();
   }, [staffDetails]);
 
   return shouldDisplayLoadingAnimation ? (
@@ -532,6 +378,7 @@ function AdminDashboard() {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
+        overflow: "hidden"
       }}
     >
       <Ring size={80} lineWeight={5} speed={1} color="white" />
@@ -567,38 +414,39 @@ function AdminDashboard() {
             margin: "1em 0",
           }}
         >
-          {actionServices.map((service, index) => {
-            return (
-              <div key={index}>
-                <h2 style={{ color: "#fff" }}>{Object.keys(service)[0]}</h2>
+          {actionServices &&
+            actionServices.map((service, index) => {
+              return (
+                <div key={index}>
+                  <h2 style={{ color: "#fff" }}>{Object.keys(service)[0]}</h2>
 
-                <hr />
-                <div className="actionButtonsContainer">
-                  {staffDetails?.superAdmin
-                    ? Object.values(service)[0].map((option, index) => (
-                        <Services
-                          option={option}
-                          key={index}
-                          setIsModalOpen={setIsModalOpen}
-                          setActiveModal={setActiveModal}
-                        />
-                      ))
-                    : Object.values(service)[0].map(
-                        (option, index) =>
-                          !option[Object.keys(option)[0]]
-                            .requiresSuperAdmin && (
-                            <Services
-                              option={option}
-                              key={index}
-                              setIsModalOpen={setIsModalOpen}
-                              setActiveModal={setActiveModal}
-                            />
-                          )
-                      )}
+                  <hr />
+                  <div className="actionButtonsContainer">
+                    {staffDetails?.superAdmin
+                      ? Object.values(service)[0].map((option, index) => (
+                          <Services
+                            option={option}
+                            key={index}
+                            setIsModalOpen={setIsModalOpen}
+                            setActiveModal={setActiveModal}
+                          />
+                        ))
+                      : Object.values(service)[0].map(
+                          (option, index) =>
+                            !option[Object.keys(option)[0]]
+                              .requiresSuperAdmin && (
+                              <Services
+                                option={option}
+                                key={index}
+                                setIsModalOpen={setIsModalOpen}
+                                setActiveModal={setActiveModal}
+                              />
+                            )
+                        )}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
         </div>
         <Modal
           style={customStyles}

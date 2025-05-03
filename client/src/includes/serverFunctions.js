@@ -1,4 +1,5 @@
 const SERVER_URL = "http://localhost:5000";
+// const SERVER_URL = "https://sdnxn5zx-5000.euw.devtunnels.ms/";
 export const getServiceDetails = async (branch, service) => {
   let staffBoardDeets;
   if (branch && service) {
@@ -48,6 +49,91 @@ export const getServicesInBranch = async (branch) => {
   }
 };
 
-export const fetchBranchAnalytics = async () => {
-  await fetch(`${SERVER_URL}/admin/analytics/branch`);
+export const fetchBranchAnalytics = async (branch) => {
+  let analyticsData;
+  await fetch(`${SERVER_URL}/admin/analytics/branch`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      branch,
+    }),
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      console.log("Analytics : ", data);
+      analyticsData = data;
+    });
+  return analyticsData;
+  return { staff: {}, history: [], services: [] };
+};
+
+export const removeServiceFunction = async (branch, service) => {
+  let respMessage;
+  try {
+    await fetch(`${SERVER_URL}/admin/remove-service`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({
+        branch,
+        service,
+      }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        respMessage = data;
+      });
+  } catch (err) {
+    console.error("Error removing service: ", err);
+  }
+  return respMessage;
+};
+
+export const fetchStaffFromBranch = async (branch) => {
+  let allStaff;
+  try {
+    await fetch(`${SERVER_URL}/admin/fetch-staff`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({
+        branch,
+      }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        allStaff = data;
+      });
+  } catch (err) {
+    console.error("Error fetching staff: ", err);
+  }
+  return allStaff;
+};
+
+export const fetchAllTransactionsFromBranch = async (branch, id, name) => {
+  let respData;
+  let history = await fetch(`${SERVER_URL}/admin/history`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      branch,
+      id,
+      name,
+    }),
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      respData = data;
+    });
+  console.log("history: ", history);
+  console.log("history: ", respData);
+  return respData;
 };

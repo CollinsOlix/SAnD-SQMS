@@ -168,6 +168,7 @@ function ServiceCenter() {
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
+          overflow: "hidden"
         }}
       >
         <Ring size={80} lineWeight={5} speed={1} color="white" />

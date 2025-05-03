@@ -73,7 +73,7 @@ const getBranchInfo = async (branch) => {
 
     return querySnapshot.data();
   } catch (err) {
-    console.error("Get Customer Err: ", err);
+    console.error("Get Customer Err:\n", err);
     return null;
   }
 };
@@ -482,7 +482,7 @@ const decrementPriorityWaitingNumber = async (branch) => {
       );
     }
   } catch (err) {
-    console.error("Error Decrementing waiting number: ", err);
+    console.error("Error Decrementing waiting number:\n", err);
   }
 };
 
@@ -515,7 +515,7 @@ const addSessionToHistory = async (
     let history = await getDailyHistory(branch, service);
     return history;
   } catch (err) {
-    console.error("Add Error: ", err);
+    console.error("Add Error:\n", err);
     return null;
   }
 };
@@ -547,7 +547,7 @@ const createNewService = async (branch, service) => {
       return "Service Created Successfully";
     }
   } catch (err) {
-    console.error("Error creating service: ", err);
+    console.error("Error creating service:\n", err);
     return "Error creating service";
   }
 };
@@ -570,7 +570,7 @@ const deleteService = async (branch, service) => {
       return "Service Does Not Exist";
     }
   } catch (err) {
-    console.error("Error Deleting Service: ", err);
+    console.error("Error Deleting Service:\n", err);
     return "Error Deleting Service";
   }
 };
@@ -592,7 +592,7 @@ const closeQueue = async (branch, service) => {
       { merge: true }
     );
   } catch (err) {
-    console.error("Error closing queue: ", err);
+    console.error("Error closing queue:\n", err);
   }
 };
 const openQueue = async (branch, service) => {
@@ -608,7 +608,7 @@ const openQueue = async (branch, service) => {
   try {
     await updateDoc(queueRef, { status: "open" }, { merge: true });
   } catch (err) {
-    console.error("Error closing queue: ", err);
+    console.error("Error closing queue:\n", err);
   }
 };
 
@@ -618,7 +618,7 @@ const endSession = async (id) => {
     await deleteDoc(sessionRef);
     return true;
   } catch (err) {
-    console.error("Error ending session: ", err);
+    console.error("Error ending session:\n", err);
     return false;
   }
 };
@@ -645,7 +645,7 @@ const getPriorityCustomers = async (branch, service) => {
       setPriorityCustomersNotAvailable(branch, service);
     return priorityCustomerArray;
   } catch (err) {
-    console.error("Error getting priority customers: ", err);
+    console.error("Error getting priority customers:\n", err);
     return [];
   }
 };
@@ -676,7 +676,7 @@ const setPriorityCustomersNotAvailable = async (branch, service) => {
       { merge: true }
     );
   } catch (err) {
-    console.error("Error setting priority customers available: ", err);
+    console.error("Error setting priority customers available:\n", err);
   }
 };
 
@@ -700,7 +700,7 @@ const setCustomerServiceToHandled = async (sessionId, service) => {
       { merge: true }
     );
   } catch (err) {
-    console.error("Error setting customer service to handled: ", err);
+    console.error("Error setting customer service to handled:\n", err);
   }
 };
 
@@ -800,14 +800,18 @@ const initializeService = async (branch, service) => {
 const getStaffInBranch = async (branch) => {
   const staffRef = collection(db, "Organizations", "Apex Bank", "staff");
   const staffQuery = query(staffRef, where("branch", "==", branch));
-  let staff = await getDocs(staffQuery);
   let allDocs = [];
-  allDocs = staff.docs.map((doc) => doc.data());
-  allDocs.forEach((doc) => {
-    doc.password = "***";
-  });
-  console.log(allDocs);
-  return allDocs;
+
+  try {
+    let staff = await getDocs(staffQuery);
+    allDocs = staff.docs.map((doc) => doc.data());
+    allDocs.forEach((doc) => {
+      doc.password = "***";
+    });
+    return allDocs;
+  } catch (err) {
+    console.error("Error Getting Staff in Branch:\n", err);
+  }
 };
 
 const getHistory = async (branch, date1 = new Date()) => {
@@ -826,20 +830,61 @@ const getHistory = async (branch, date1 = new Date()) => {
     where("date", "<=", date1)
   );
   //get date of the starting day of this week in js?
-
-  const historySnapshot = await getDocs(q);
   let allDocs = [];
-  allDocs = historySnapshot.docs.map((doc) => doc.data());
+  try {
+    const historySnapshot = await getDocs(q);
+    allDocs = historySnapshot.docs.map((doc) => doc.data());
+    return allDocs;
+  } catch (err) {
+    console.error("Error getting history:\n", err);
+    return allDocs;
+  }
+};
+
+const fetchBranchAnalytics = async (branch, date1) => {
+  try {
+    let staff = await getStaffInBranch(branch);
+    // await initializeBranch(branch);
+    // await initializeService(branch, service);
+    let services = await fetchServices(branch);
+    let history = await getHistory(branch, date1);
+    return { staff, services, history };
+  } catch (err) {
+    console.error("Error fetching branch analytics:\n", err);
+    return null;
+  }
+};
+
+const getStaffFromBranch = async (branch) => {
+  const staffRef = collection(db, "Organizations", "Apex Bank", "staff");
+  let snapShot = await getDocs(query(staffRef, where("branch", "==", branch)));
+  let allDocs = [];
+  snapShot.forEach((doc) => allDocs.push({ ...doc.data(), password: "***" }));
   return allDocs;
 };
 
-const fetchBranchAnalytics = async (branch, service, date1) => {
-  // let staff = await getStaffInBranch(branch);
-  await initializeBranch(branch);
-  await initializeService(branch, service);
-  let history = await getHistory(branch, date1);
+const getAllTransactionsByStaff = async (branch, id, name) => {
+  const historyRef = collection(
+    db,
+    "Organizations",
+    "Apex Bank",
+    "branches",
+    branch,
+    "history"
+  );
+  const q = query(
+    historyRef,
+    where("handledBy.staffId", "==", id),
+    where("handledBy.staffName", "==", name)
+  );
+  let historyDocs = await getDocs(q);
 
-  return history;
+  let allDocs = [];
+  historyDocs.forEach((doc) => {
+    allDocs.push(doc.data());
+  });
+
+  return allDocs;
 };
 module.exports = {
   addBranch,
@@ -862,6 +907,7 @@ module.exports = {
   getServiceDetails,
   initializeService,
   generateSessionId,
+  getStaffFromBranch,
   getWaitingCustomers,
   fetchBranchesFromDB,
   addSessionToHistory,
@@ -869,6 +915,7 @@ module.exports = {
   getPriorityCustomers,
   setBranchDefaultValues,
   updateServiceQueueNumber,
+  getAllTransactionsByStaff,
   updatePriorityQueueDetails,
   setCustomerServiceToHandled,
   decrementPriorityWaitingNumber,

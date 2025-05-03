@@ -7,6 +7,8 @@ const {
   createNewService,
   deleteService,
   fetchBranchAnalytics,
+  getStaffFromBranch,
+  getAllTransactionsByStaff,
 } = require("../config/firestoreFunctions");
 
 module.exports = function (app) {
@@ -41,22 +43,47 @@ module.exports = function (app) {
   });
   app.post("/admin/remove-service", async (request, response) => {
     const { branch, service } = request.body;
-    console.log(branch, service);
+    console.log("B: ", branch, service);
     const serviceAdded = await deleteService(branch, service);
     response.json(serviceAdded);
   });
 
-  app.post("/admin/analytics/branch", async (request, response) => {
+  app.get("/admin/staff", async (request, response) => {
     let today = new Date();
     let dateFromTwoWeeksAgo = new Date(
       today.getTime() - 14 * 24 * 60 * 60 * 1000
     );
     //get date from exactly two weeks ago in js?
-    const staff = await fetchBranchAnalytics(
-      "Apex Bank ( Girne )",
-      "Account and Card Issues",
-      today
+    // const staff = await fetchBranchAnalytics(
+    //   "Apex Bank ( Girne )",
+    //   "Account and Card Issues"
+    // );
+    const staff = await getAllTransactionsByStaff(
+      "Apex Bank ( Upper Girne )",
+      "101111",
+      "Emeraude, B"
     );
     response.json(staff);
+  });
+  app.post("/admin/analytics/branch", async (request, response) => {
+    const { branch } = request.body;
+    let today = new Date();
+    let dateFromTwoWeeksAgo = new Date(
+      today.getTime() - 14 * 24 * 60 * 60 * 1000
+    );
+    //get date from exactly two weeks ago in js?
+    const data = await fetchBranchAnalytics(branch);
+    response.json(data);
+  });
+
+  app.post("/admin/fetch-staff", async (request, response) => {
+    const { branch } = request.body;
+    let staff = await getStaffFromBranch(branch);
+    response.json(staff);
+  });
+  app.post("/admin/history", async (request, response) => {
+    const { branch, id, name } = request.body;
+    const staffHistory = await getAllTransactionsByStaff(branch, id, name);
+    response.json(staffHistory);
   });
 };

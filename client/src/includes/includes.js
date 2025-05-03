@@ -153,6 +153,7 @@ const actionServices = [
               }}
             />
           ),
+          action: "View Staff Analytics",
           onClick: addBranch,
           requiresSuperAdmin: false,
         },
