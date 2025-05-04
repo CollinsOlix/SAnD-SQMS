@@ -5,6 +5,13 @@ import {
 } from "../includes/serverFunctions";
 import LineGraph from "./LineGraph";
 import { Ring } from "@uiball/loaders";
+import {
+  getAllHistoryForThisMonth,
+  getStartOfMonth,
+  getStartOfWeek,
+  initializeMonth,
+} from "../includes/includes";
+// import { getStartOfWeek } from "../includes/includes";
 
 function StaffAnalyticsModal({
   setIsModalOpen,
@@ -14,16 +21,22 @@ function StaffAnalyticsModal({
   const [allStaff, setAllStaff] = useState();
   const [activeStaff, setActiveStaff] = useState();
   const [staffHistory, setStaffHistory] = useState();
+  const [graphData, setGraphData] = useState();
+  const [graphTitle, setGraphTitle] = useState("Data title goes here");
   const [averageServicingTime, setAverageServicingTime] = useState();
   const [shouldDisplayLoadingAnimation, setShouldDisplayLoadingAnimation] =
     useState(true);
   const branchNameRef = useRef();
   const staffNameRef = useRef();
+
+  //
   const fetchStaff = async (branch) => {
     let staff = await fetchStaffFromBranch(branch);
     setAllStaff((_) => (_ = staff));
     setActiveStaff((_) => (_ = staff[0]));
   };
+
+  //
   const fetchStaffHistory = async (branch, id, name) => {
     let staffHistory = await fetchAllTransactionsFromBranch(branch, id, name);
     setStaffHistory((_) => (_ = staffHistory));
@@ -33,9 +46,54 @@ function StaffAnalyticsModal({
           staffHistory.reduce((a, b) => a + b.serviceDuration, 0) /
           staffHistory.length)
     );
+
     setShouldDisplayLoadingAnimation(false);
   };
 
+  //
+  const weeklyData = () => {
+    console.log(staffHistory);
+    setShouldDisplayLoadingAnimation(true);
+    setGraphTitle("Service visualization for this week");
+    let weekData = {
+      Monday: 0,
+      Tuesday: 0,
+      Wednesday: 0,
+      Thursday: 0,
+      Friday: 0,
+    };
+    setGraphData((_) => (_ = weekData));
+    staffHistory &&
+      staffHistory.forEach((item) => {
+        let r = new Date(
+          item.date.seconds * 1000 + item.date.nanoseconds / 1e6
+        );
+        if (r.getMonth() >= new Date().getMonth()) {
+          r = r.toLocaleDateString("en-US", { weekday: "long" });
+          if (r.toLowerCase() === "sunday" || r.toLowerCase() === "saturday") {
+            return;
+          } else {
+            weekData[r]++;
+          }
+        }
+        setGraphData((e) => (e = weekData));
+      });
+    console.log(weekData);
+    setTimeout(() => {
+      setShouldDisplayLoadingAnimation(false);
+    }, 500);
+  };
+
+  //
+  const monthlyData = () => {
+    setShouldDisplayLoadingAnimation(true);
+    setGraphTitle("Service visualization for this month");
+    staffHistory &&
+      setGraphData((_) => (_ = getAllHistoryForThisMonth(staffHistory)));
+    setTimeout(() => {
+      setShouldDisplayLoadingAnimation(false);
+    }, 500);
+  };
   useEffect(() => {
     if (branchNameRef.current.value) {
       fetchStaff(branchNameRef.current.value);
@@ -43,18 +101,17 @@ function StaffAnalyticsModal({
   }, []);
 
   useEffect(() => {
-    console.log("All Staff: ", allStaff);
-
-    allStaff &&
+    activeStaff &&
       fetchStaffHistory(
         activeStaff.branch,
         activeStaff.staffId,
         activeStaff.name
       );
-  }, [allStaff]);
+  }, [activeStaff]);
+
   useEffect(() => {
-    averageServicingTime && console.log("AveServTime: ", averageServicingTime);
-  }, [averageServicingTime]);
+    staffHistory && weeklyData();
+  }, [staffHistory]);
   return (
     <div style={{ width: "100%" }}>
       <div
@@ -85,6 +142,9 @@ function StaffAnalyticsModal({
         ref={branchNameRef}
         className="adminDashInput"
         disabled={!staffDetails.superAdmin}
+        onChange={() => {
+          fetchStaff(branchNameRef.current.value);
+        }}
       >
         {availableBranches &&
           availableBranches.map((item, index) => (
@@ -95,7 +155,12 @@ function StaffAnalyticsModal({
         ref={staffNameRef}
         className="adminDashInput"
         onChange={() => {
-          setActiveStaff((_) => (_ = staffNameRef.current.value));
+          setActiveStaff(
+            (_) =>
+              (_ = allStaff.find((item) =>
+                staffNameRef.current.value.includes(item.name)
+              ))
+          );
         }}
       >
         {allStaff &&
@@ -147,8 +212,12 @@ function StaffAnalyticsModal({
                 textAlign: "center",
               }}
             >
-              <p>Average servicing time</p>
-              <h1>{Math.trunc(averageServicingTime * 100) / 100}</h1>
+              <p>Average servicing time in minutes</p>
+              <h1>
+                {staffHistory.length > 0
+                  ? `${Math.trunc((averageServicingTime / 60) * 100) / 100}`
+                  : "Null"}
+              </h1>
             </div>
             <div
               style={{
@@ -159,8 +228,10 @@ function StaffAnalyticsModal({
                 textAlign: "center",
               }}
             >
-              <p>Average number of services rendered</p>
-              <h1>{"yolo"}</h1>
+              <p>Overall Number of services rendered</p>
+              <h1>
+                {staffHistory?.length > 0 ? staffHistory?.length : "Null"}
+              </h1>
             </div>
             <div
               style={{
@@ -172,17 +243,38 @@ function StaffAnalyticsModal({
               }}
             >
               <p>Number of transactions this week</p>
-              <h1>{"yolo"}</h1>
+              <h1>
+                {
+                  staffHistory.filter((item) => {
+                    let r = new Date(
+                      item?.date.seconds * 1000 + item.date.nanoseconds / 1e6
+                    );
+                    let monday = getStartOfWeek(new Date());
+
+                    return r > monday && item;
+                  }).length
+                }
+              </h1>
             </div>
           </div>
           <div>
-            <LineGraph title={"Some title"} data={{ Mon: 4, Tue: 4, Wed: 7 }} />
+            <LineGraph
+              title={graphTitle}
+              data={
+                graphData
+                  ? graphData
+                  : initializeMonth(
+                      new Date().getFullYear(),
+                      new Date().getMonth()
+                    )
+              }
+            />
           </div>
         </div>
       )}
       <div style={{ display: "flex" }}>
-        <button>Do something</button>
-        <button>Do something</button>
+        <button onClick={weeklyData}>Data for the week</button>
+        <button onClick={monthlyData}>Data for the month</button>
       </div>
     </div>
   );

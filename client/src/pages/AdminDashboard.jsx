@@ -31,15 +31,12 @@ function AdminDashboard() {
   //
   //
   const fetchBranches = async () => {
-    console.log("Staff det: ", staffDetails);
     await fetch(`${SERVER_URL}/get-branches`)
       .then((response) => response.json())
       .then((data) => {
-        console.log("Fetched banches: ", data);
         if (staffDetails?.superAdmin) {
           setAvailableBranches((e) => (e = data));
         } else {
-          console.log("Staff Details: ", staffDetails);
           setAvailableBranches((e) => [
             (e = data.find((item) => item.branchName === staffDetails?.branch)),
           ]);
@@ -59,7 +56,6 @@ function AdminDashboard() {
           if (data.staffDetails.staffType !== "admin") {
             navigate("/staff/board");
           } else console.log(data);
-          console.log("Staff: ", data);
           setStaffDetails((e) => (e = data.staffDetails));
           setShouldDisplayLoadingAnimation(false);
         } else {
@@ -203,12 +199,6 @@ function AdminDashboard() {
     const [responseMessage, setResponseMessage] = useState();
 
     const addNewService = async () => {
-      console.log({
-        service: serviceNameRef.current.value,
-        branch: staffDetails.superAdmin
-          ? branchNameRef.current.value
-          : staffDetails.branch,
-      });
       try {
         await fetch(`${SERVER_URL}/admin/new-service`, {
           method: "POST",
