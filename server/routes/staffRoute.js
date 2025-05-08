@@ -152,7 +152,10 @@ module.exports = function (app) {
       waitingCustomers.length
     );
     console.log("B: ", branchData, " S: ", serviceData);
-    if (serviceData.priorityCustomersAvailable) {
+    if (
+      serviceData.priorityCustomersAvailable ||
+      priorityCustomers.length > 0
+    ) {
       if (branchData.numberOfPeopleBeforeVIP > 0) {
         if (waitingCustomers.length > 0) {
           await decrementPriorityWaitingNumber(branch);

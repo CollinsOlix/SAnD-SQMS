@@ -17,7 +17,9 @@ function DailyHistory({
 }) {
   return (
     <div className="dailyHistoryWrapper">
-      <h3>Hello, {staffDetails.name}</h3>
+      <h3>
+        Hello, {staffDetails.name} - {staffDetails.branch}
+      </h3>
       <div className="dailyHistory">
         <h1 className="">Daily History</h1>
         <button className="printBtn" onClick={printDailyHistory}>

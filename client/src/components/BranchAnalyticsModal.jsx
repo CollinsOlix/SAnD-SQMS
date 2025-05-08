@@ -48,15 +48,12 @@ export default function BranchAnalyticsModal({
     setLineChartData((_) => (_ = weekData));
     analyticsData &&
       analyticsData.history.forEach((item) => {
-        console.log("Item: ", item);
         let r = new Date(
           item.date.seconds * 1000 + item.date.nanoseconds / 1e6
         ).toLocaleDateString("en-US", { weekday: "long" });
-        console.log("R: ", r);
         weekData[r]++;
         setLineChartData((e) => (e = weekData));
       });
-    console.log("Weekdata: ", lineChartData);
 
     setShouldDisplayLoadingAnimation(false);
     return analyticsData;
@@ -152,7 +149,7 @@ export default function BranchAnalyticsModal({
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
-              overflow: "hidden"
+              overflow: "hidden",
             }}
           >
             <Ring size={80} lineWeight={5} speed={1} color="#3a72da" />

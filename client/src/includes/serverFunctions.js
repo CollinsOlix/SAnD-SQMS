@@ -137,3 +137,21 @@ export const fetchAllTransactionsFromBranch = async (branch, id, name) => {
   console.log("history: ", respData);
   return respData;
 };
+
+export const fetchServiceAnalytics = async (branch, service) => {
+  let respData;
+  await fetch(`${SERVER_URL}/admin/service-analytics`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      branch,
+      service,
+    }),
+  })
+    .then((response) => response.json())
+    .then((data) => (respData = data));
+  console.log(respData);
+  return respData;
+};

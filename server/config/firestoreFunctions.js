@@ -301,9 +301,18 @@ const createNewSession = async (
 
     //
     //
-    if (priorityCustomersAvailable == false) {
+    console.log("priorityCustomersAvailable: ", priorityCustomersAvailable);
+    if (priorityCustomersAvailable === false) {
       //create a new session with priority status
 
+      await setDoc(
+        priorityQueueRef,
+        {
+          priorityCustomersAvailable: true,
+          priorityLastNumber: serviceItem.ticketNumber,
+        },
+        { merge: true }
+      );
       await setDoc(
         doc(db, "Organizations", "Apex Bank", "sessions", newSessionId),
         {
@@ -317,14 +326,6 @@ const createNewSession = async (
           hasBeenHandled: false,
           ticketNumber: serviceItem.ticketNumber,
         }
-      );
-      await setDoc(
-        priorityQueueRef,
-        {
-          priorityCustomersAvailable: true,
-          priorityLastNumber: serviceItem.ticketNumber,
-        },
-        { merge: true }
       );
     } else {
       await setDoc(
@@ -641,8 +642,8 @@ const getPriorityCustomers = async (branch, service) => {
         priorityCustomerArray.push(doc.data());
       }
     });
-    if (!priorityCustomerArray.length > 0)
-      setPriorityCustomersNotAvailable(branch, service);
+    if (!priorityCustomerArray.length > 0) console.log("True");
+    setPriorityCustomersNotAvailable(branch, service);
     return priorityCustomerArray;
   } catch (err) {
     console.error("Error getting priority customers:\n", err);
@@ -665,7 +666,7 @@ const setPriorityCustomersNotAvailable = async (branch, service) => {
   try {
     await setDoc(
       branchRef,
-      { numberOfPeopleBeforeVIP: branchDetails.data().priorityMaxWait },
+      { numberOfPeopleBeforeVIP: branchDetails.data().priorityMaxWait || 3 },
       { merge: true }
     );
     await setDoc(
@@ -767,6 +768,7 @@ const initializeBranch = async (branch) => {
   await setDoc(
     branchRef,
     {
+      priorityType: "Same Queue",
       numberOfPeopleBeforeVIP: 3,
       priorityMaxWait: 3,
     },
@@ -886,6 +888,40 @@ const getAllTransactionsByStaff = async (branch, id, name) => {
 
   return allDocs;
 };
+
+const getServiceAnalytics = async (branch, service) => {
+  const historyRef = collection(
+    db,
+    "Organizations",
+    "Apex Bank",
+    "branches",
+    branch,
+    "history"
+  );
+  let thisMonth = new Date().setDate(1);
+  let q = query(
+    historyRef,
+    where("service", "==", service),
+    where("date", ">=", new Date(thisMonth))
+  );
+  let historyDocs = await getDocs(q);
+  q = [];
+  historyDocs.forEach((doc) => q.push(doc.data()));
+
+  let staffRef = collection(db, "Organizations", "Apex Bank", "staff");
+  let staffDocs = await getDocs(
+    query(
+      staffRef,
+      where("assignedTo", "==", service),
+      where("branch", "==", branch)
+    )
+  );
+  let staff = [];
+  staffDocs.forEach((doc) => staff.push(doc.data()));
+
+
+  return { serviceHistory: q, staff };
+};
 module.exports = {
   addBranch,
   openQueue,
@@ -903,11 +939,12 @@ module.exports = {
   joinServiceQueue,
   initializeBranch,
   createNewSession,
+  generateSessionId,
   setPriorityWaitTo,
   getServiceDetails,
   initializeService,
-  generateSessionId,
   getStaffFromBranch,
+  getServiceAnalytics,
   getWaitingCustomers,
   fetchBranchesFromDB,
   addSessionToHistory,

@@ -9,6 +9,9 @@ const {
   fetchBranchAnalytics,
   getStaffFromBranch,
   getAllTransactionsByStaff,
+  getServiceAnalytics,
+  initializeService,
+  initializeBranch,
 } = require("../config/firestoreFunctions");
 
 module.exports = function (app) {
@@ -58,12 +61,17 @@ module.exports = function (app) {
     //   "Apex Bank ( Girne )",
     //   "Account and Card Issues"
     // );
-    const staff = await getAllTransactionsByStaff(
+    initializeBranch("Apex Bank ( Upper Girne )");
+    await initializeService(
       "Apex Bank ( Upper Girne )",
-      "101111",
-      "Emeraude, B"
+      "Account and Card Issues"
     );
-    response.json(staff);
+    // const staff = await getServiceAnalytics(
+    //   "Apex Bank ( Upper Girne )",
+    //   "Account and Card Issues"
+    // );
+    // response.json(staff);
+    response.json([]);
   });
   app.post("/admin/analytics/branch", async (request, response) => {
     const { branch } = request.body;
@@ -85,5 +93,11 @@ module.exports = function (app) {
     const { branch, id, name } = request.body;
     const staffHistory = await getAllTransactionsByStaff(branch, id, name);
     response.json(staffHistory);
+  });
+
+  app.post("/admin/service-analytics", async (request, response) => {
+    const { branch, service } = request.body;
+    const data = await getServiceAnalytics(branch, service);
+    response.json(data);
   });
 };

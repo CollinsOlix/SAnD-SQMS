@@ -132,7 +132,7 @@ const actionServices = [
   {
     "View Analytics": [
       {
-        "View Queue Analytics": {
+        "View Service Analytics": {
           icon: (
             <AnalyticsIcon
               sx={{
@@ -140,6 +140,7 @@ const actionServices = [
               }}
             />
           ),
+          action: "View Service Analytics",
           onClick: addBranch,
           requiresSuperAdmin: false,
         },
@@ -228,7 +229,7 @@ export function initializeMonth(year, month) {
     j = 0;
   while (i < numberOfDays) {
     monthDays[`${i + 1} ${weekDays[j]}`] = 0;
-    if (j == 6) {
+    if (j === 6) {
       j = 0;
       i++;
       continue;

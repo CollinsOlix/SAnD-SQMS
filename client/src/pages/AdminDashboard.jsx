@@ -1,5 +1,4 @@
 import React, {
-  useCallback,
   useContext,
   useEffect,
   useLayoutEffect,
@@ -17,6 +16,7 @@ import { Ring } from "@uiball/loaders";
 import BranchAnalyticsModal from "../components/BranchAnalyticsModal";
 import RemoveServiceModal from "../components/RemoveServiceModal";
 import StaffAnalyticsModal from "../components/StaffAnalyticsModal";
+import QueueAnalyticsModal from "../components/QueueAnalyticsModal";
 
 function AdminDashboard() {
   let { id } = useParams();
@@ -332,6 +332,14 @@ function AdminDashboard() {
         );
       case "Test":
         return <></>;
+      case "View Service Analytics":
+        return (
+          <QueueAnalyticsModal
+            setIsModalOpen={setIsModalOpen}
+            availableBranches={availableBranches}
+            staffDetails={staffDetails}
+          />
+        );
       default:
         return <EmptyModal />;
     }
