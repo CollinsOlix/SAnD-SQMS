@@ -35,7 +35,14 @@ function BackDrop({ children, showNavTabs }) {
           </div>
         )}
       </nav>
-      <div style={{ flex: 1, maxHeight: "100%", overflow: "hidden" }}>
+      <div
+        style={{
+          flex: 1,
+          maxHeight: "100%",
+          overflow: "hidden",
+          paddingTop: "10px",
+        }}
+      >
         {children}
       </div>
     </div>

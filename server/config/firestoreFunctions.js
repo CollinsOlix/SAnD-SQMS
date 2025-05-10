@@ -11,6 +11,7 @@ const {
   orderBy,
   updateDoc,
   deleteDoc,
+  onSnapshot,
 } = require("firebase/firestore");
 const { db } = require("./firebase");
 
@@ -463,7 +464,7 @@ const getWaitingCustomers = async (branch) => {
     });
     return waitingCustomers;
   } catch (err) {
-    console.error(err);
+    console.error("error getting waiting customers: ", err);
     return null;
   }
 };
@@ -919,8 +920,26 @@ const getServiceAnalytics = async (branch, service) => {
   let staff = [];
   staffDocs.forEach((doc) => staff.push(doc.data()));
 
-
   return { serviceHistory: q, staff };
+};
+
+const getRealTimeQueueData = (branch) => {
+  console.log("branch", branch);
+  let queueData = [];
+  try {
+    onSnapshot(
+      query(
+        collection(db, "Organizations", "Apex Bank", "sessions"),
+        where("branch", "==", branch)
+      ),
+      (querySnapshot) => {
+        querySnapshot.forEach((doc) => queueData.push(doc.data()));
+      }
+    );
+  } catch (err) {
+    console.log("Error fetching r/time queue updates: ", err);
+  }
+  return queueData;
 };
 module.exports = {
   addBranch,
@@ -948,6 +967,7 @@ module.exports = {
   getWaitingCustomers,
   fetchBranchesFromDB,
   addSessionToHistory,
+  getRealTimeQueueData,
   fetchBranchAnalytics,
   getPriorityCustomers,
   setBranchDefaultValues,

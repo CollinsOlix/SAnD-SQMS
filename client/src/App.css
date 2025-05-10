@@ -29,6 +29,7 @@ nav {
   padding: 1em 1.5em;
   justify-content: space-between;
   align-items: center;
+  border-bottom: 2px solid rgb(226, 226, 226);
 }
 .navLinks {
   display: flex;

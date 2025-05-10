@@ -77,7 +77,7 @@ const QueuePicker = ({ index, item, active, noWaitingNumber }) => {
           margin: "0",
         }}
       >
-        {item.serviceCurrentNumber}
+        {item.lastQueueNumber}
       </p>
       <div
         className="icon-container"

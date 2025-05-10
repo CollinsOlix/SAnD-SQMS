@@ -260,4 +260,5 @@ app.post("/join-queue", async (request, response) => {
     .json(joinQueue);
 });
 
-app.listen(PORT, console.log("Listening on PORT ", PORT));
+// app.listen(PORT, console.log("Listening on PORT ", PORT));
+module.exports = app;

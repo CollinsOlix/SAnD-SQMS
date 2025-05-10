@@ -13,6 +13,7 @@ import { useParams } from "react-router";
 import "../styles/serviceCenter.css";
 import Modal from "react-modal";
 import { Ring } from "@uiball/loaders";
+import useWebSocket from "react-use-websocket";
 
 function ServiceCenter() {
   const navigate = useNavigate();
@@ -44,6 +45,16 @@ function ServiceCenter() {
     setSessionDetails,
     SERVER_URL,
   } = useContext(AppContext);
+
+  const [socketUrl, setSocketUrl] = useState(SERVER_URL);
+  const [messageHistory, setMessageHistory] = useState([]);
+  const { sendMessage, lastMessage, readyState } = useWebSocket(socketUrl);
+
+  useEffect(() => {
+    if (lastMessage !== null) {
+      setMessageHistory((prev) => prev.concat(lastMessage));
+    }
+  }, [lastMessage]);
 
   //
   //Requesting for user logged in status
@@ -79,7 +90,11 @@ function ServiceCenter() {
       })
         .then((response) => response.json())
         .then((data) => {
-          console.log(data);
+          sendMessage(
+            JSON.stringify({
+              branch,
+            })
+          );
           setAvailableServicesInBranch((e) => (e = data));
         });
     },
@@ -137,12 +152,22 @@ function ServiceCenter() {
       getSessionData();
     }
   }, [getSessionData, isUserLoggedIn]);
+
   useEffect(() => {
     console.log("Avail: ", availableServicesInBranch);
-    if (availableServicesInBranch && sessionDetails) {
+    if (availableServicesInBranch.length > 0 && sessionDetails) {
       setShouldDisplayLoadingAnimation((e) => (e = false));
     }
   }, [availableServicesInBranch, sessionDetails]);
+
+  useEffect(() => {
+    if (lastMessage) {
+      console.log("This part ran", Array.isArray(JSON.parse(lastMessage.data)));
+      console.log("This part ran a", availableServicesInBranch);
+      lastMessage?.data &&
+        setAvailableServicesInBranch((_) => (_ = JSON.parse(lastMessage.data)));
+    }
+  }, [lastMessage]);
 
   if (sessionDetails === "Session not found") {
     return (
@@ -168,7 +193,7 @@ function ServiceCenter() {
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-          overflow: "hidden"
+          overflow: "hidden",
         }}
       >
         <Ring size={80} lineWeight={5} speed={1} color="white" />
@@ -284,45 +309,33 @@ function ServiceCenter() {
                           ticketNumber:
                             sessionDetails.service[item].ticketNumber,
                           serviceCurrentNumber:
-                            (availableServicesInBranch &&
-                              availableServicesInBranch.find(
-                                (service) =>
-                                  service?.serviceName ===
-                                  sessionDetails.service[item].serviceName
-                              ).serviceCurrentNumber) ||
-                            0,
+                            availableServicesInBranch.find(
+                              (service) =>
+                                service?.serviceName ===
+                                sessionDetails.service[item].serviceName
+                            ).serviceCurrentNumber || 0,
                           peopleWaiting:
-                            (availableServicesInBranch &&
+                            sessionDetails.service[item].ticketNumber -
                               availableServicesInBranch.find(
                                 (service) =>
                                   service.serviceName ===
                                   sessionDetails.service[item].serviceName
-                              ).lastQueueNumber -
-                              availableServicesInBranch.find(
-                                (service) =>
-                                  service.serviceName ===
-                                  sessionDetails.service[item].serviceName
-                              ).serviceCurrentNumber) ||
-                            0,
+                              ).serviceCurrentNumber || 0,
                         }}
                       />
                     </div>
                   );
                 })}
-              {availableServicesInBranch &&
-                availableServicesInBranch.map((item, index) => {
-                  if (
-                    !(
-                      sessionDetails && sessionDetails.service[item.serviceName]
-                    )
-                  ) {
-                    return (
-                      <QueuePicker index={index} key={index} item={item} />
-                    );
-                  } else {
-                    return <></>;
-                  }
-                })}
+
+              {availableServicesInBranch.map((item, index) => {
+                if (
+                  !(sessionDetails && sessionDetails.service[item.serviceName])
+                ) {
+                  return <QueuePicker index={index} key={index} item={item} />;
+                } else {
+                  return <></>;
+                }
+              })}
             </div>
           </div>
         </div>

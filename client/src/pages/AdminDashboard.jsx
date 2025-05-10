@@ -17,6 +17,7 @@ import BranchAnalyticsModal from "../components/BranchAnalyticsModal";
 import RemoveServiceModal from "../components/RemoveServiceModal";
 import StaffAnalyticsModal from "../components/StaffAnalyticsModal";
 import QueueAnalyticsModal from "../components/QueueAnalyticsModal";
+import AssignStaffToServiceModal from "../components/AssignStaffToServiceModal";
 
 function AdminDashboard() {
   let { id } = useParams();
@@ -328,6 +329,14 @@ function AdminDashboard() {
             setIsModalOpen={setIsModalOpen}
             availableBranches={availableBranches}
             staffDetails={staffDetails}
+          />
+        );
+      case "Assign Staff to a Service":
+        return (
+          <AssignStaffToServiceModal
+            staffDetails={staffDetails}
+            setIsModalOpen={setIsModalOpen}
+            availableBranches={availableBranches}
           />
         );
       case "Test":

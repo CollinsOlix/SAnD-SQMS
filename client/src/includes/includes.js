@@ -78,6 +78,7 @@ const actionServices = [
               }}
             />
           ),
+          action: "Assign Staff to a Service",
           onClick: addBranch,
           requiresSuperAdmin: false,
         },

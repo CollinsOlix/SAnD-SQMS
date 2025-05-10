@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { BrowserRouter, Route, Routes } from "react-router";
 import AdminDashboard from "./pages/AdminDashboard";
 import ServiceCenter from "./pages/ServiceCenter";
@@ -12,16 +12,28 @@ import Test from "./pages/Test";
 import App from "./App";
 
 import "./index.css";
+import useWebSocket from "react-use-websocket";
+
+const SERVER_URL = "http://localhost:5000";
 
 function BaseLayout() {
-  const SERVER_URL = "http://localhost:5000";
   // const SERVER_URL = "https://sdnxn5zx-5000.euw.devtunnels.ms/";
 
   const [staffDetails, setStaffDetails] = useState();
   const [sessionDetails, setSessionDetails] = useState();
   const [staffBoardDetails, setStaffBoardDetails] = useState();
   const [customerBranchOption, setCustomerBranchOption] = useState();
-  const [availableServicesInBranch, setAvailableServicesInBranch] = useState();
+  const [availableServicesInBranch, setAvailableServicesInBranch] = useState(
+    new Array(0)
+  );
+
+  const [socketUrl, setSocketUrl] = useState(SERVER_URL);
+  const [messageHistory, setMessageHistory] = useState([]);
+  const { sendMessage, lastMessage, readyState } = useWebSocket(socketUrl);
+
+  const listenForQueueNumberUpdates = () => {};
+
+  useEffect(() => {}, [customerBranchOption]);
 
   return (
     <AppContext

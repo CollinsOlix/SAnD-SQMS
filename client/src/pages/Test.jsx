@@ -1,13 +1,45 @@
-import React, { useRef } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import BackDrop from "../components/BackDrop";
 import { FormGroup } from "@mui/material";
+import useWebSocket, { ReadyState } from "react-use-websocket";
+
+const SERVER_URL = "http://localhost:5000";
 
 function Test() {
   const branchNameRef = useRef();
   const serviceNameRef = useRef();
+
+  const [socketUrl, setSocketUrl] = useState(SERVER_URL);
+  const [messageHistory, setMessageHistory] = useState([]);
+  const { sendMessage, lastMessage, readyState } = useWebSocket(socketUrl);
+
+  useEffect(() => {
+    if (lastMessage !== null) {
+      setMessageHistory((prev) => prev.concat(lastMessage));
+    }
+  }, [lastMessage]);
+
+  const handleSendMessage = useCallback(
+    () =>
+      sendMessage(
+        JSON.stringify({
+          branch: "Apex Bank ( Girne )",
+        })
+      ),
+    []
+  );
+
+  const connectionStatus = {
+    [ReadyState.CONNECTING]: "Connecting",
+    [ReadyState.OPEN]: "Open",
+    [ReadyState.CLOSING]: "Closing",
+    [ReadyState.CLOSED]: "Closed",
+    [ReadyState.UNINSTANTIATED]: "Uninstantiated",
+  }[readyState];
+
   return (
     <BackDrop>
-      <div style={{ width: "50%", justifySelf: "center" }}>
+      {/* <div style={{ width: "50%", justifySelf: "center" }}>
         <FormGroup>
           <legend>Reset</legend>
           <label
@@ -78,6 +110,25 @@ function Test() {
             Third
           </button>
         </FormGroup>
+      </div> */}
+
+      <div>
+        <button
+          onClick={handleSendMessage}
+          disabled={readyState !== ReadyState.OPEN}
+        >
+          Click Me to send 'Hello'
+        </button>
+        {/* <span>The WebSocket is currently {connectionStatus}</span> */}
+        <br />
+        {lastMessage ? (
+          <span>Last message: {lastMessage.data.length}</span>
+        ) : null}
+        <ul>
+          {messageHistory.map((message, idx) => (
+            <span key={idx}>{message ? message.data.length : null}</span>
+          ))}
+        </ul>
       </div>
     </BackDrop>
   );

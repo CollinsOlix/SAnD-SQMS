@@ -61,7 +61,7 @@ module.exports = function (app) {
     //   "Apex Bank ( Girne )",
     //   "Account and Card Issues"
     // );
-    initializeBranch("Apex Bank ( Upper Girne )");
+    initializeBranch("Apex Bank ( Girne )");
     await initializeService(
       "Apex Bank ( Upper Girne )",
       "Account and Card Issues"
