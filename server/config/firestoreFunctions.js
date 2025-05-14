@@ -16,6 +16,7 @@ const {
 const { db } = require("./firebase");
 
 const { v4: uuidv4 } = require("uuid");
+const emailjs = require("@emailjs/nodejs");
 
 //
 //Helper function
@@ -223,6 +224,49 @@ const incrementServiceQueueNumber = async (branch, service) => {
     service
   );
   const serviceToUpdate = await getDoc(docReff);
+
+  //if there are more than 10 people in the queue
+  if (
+    serviceToUpdate.data().lastQueueNumber -
+      serviceToUpdate.data().serviceCurrentNumber >
+    10
+  ) {
+    //find the person who's ticket number is 10 numbers ahead of the current number
+    //and send them a notification
+
+    let customerRef = query(
+      collection(db, "Organizations", "Apex Bank", "sessions"),
+      where("branch", "==", branch),
+      where(
+        `service.${service}.ticketNumber`,
+        "==",
+        serviceToUpdate.data().serviceCurrentNumber + 10
+      )
+    );
+    const customerDoc = await getDocs(customerRef);
+    customerRef = [];
+    customerDoc.forEach((doc) => customerRef.push(doc.data()));
+
+    //send a notification to the customer
+
+    var templateParams = {
+      title: "Less than 10 people left",
+      email: customerRef[0].customerDetails.email,
+    };
+
+    emailjs
+      .send("service_7zxm5j5", "template_bbzxxam", templateParams, {
+        publicKey: "j5SRNJSTwRYZhM0i6",
+      })
+      .then(
+        function (response) {
+          console.log("SUCCESS!", response.status, response.text);
+        },
+        function (err) {
+          console.log("FAILED...", err);
+        }
+      );
+  }
   await setDoc(
     docReff,
     {
@@ -279,7 +323,9 @@ const createNewSession = async (
   //
   //Make it such that if the customer is a priority customer,
   //the session is created with a priority status
+
   if (branchDetails.priorityType == "Same Queue" && customerDetails.priority) {
+    console.log("Running this part");
     //
     //check if priority queue is empty
     const priorityQueueRef = doc(
@@ -469,14 +515,22 @@ const getWaitingCustomers = async (branch) => {
   }
 };
 
-const decrementPriorityWaitingNumber = async (branch) => {
-  const branchRef = doc(db, "Organizations", "Apex Bank", "branches", branch);
+const decrementPriorityWaitingNumber = async (branch, service) => {
+  const serviceRef = doc(
+    db,
+    "Organizations",
+    "Apex Bank",
+    "branches",
+    branch,
+    "availableServices",
+    service
+  );
   try {
-    const branchDeets = await getDoc(branchRef);
-    const vipWaitingNumber = branchDeets.data().numberOfPeopleBeforeVIP;
+    const serviceDeets = await getDoc(serviceRef);
+    const vipWaitingNumber = serviceDeets.data().numberOfPeopleBeforeVIP;
     if (vipWaitingNumber > 0) {
       await updateDoc(
-        branchRef,
+        serviceRef,
         {
           numberOfPeopleBeforeVIP: vipWaitingNumber - 1,
         },
@@ -513,7 +567,6 @@ const addSessionToHistory = async (
       date: Timestamp.now(),
     });
 
-    await incrementServiceQueueNumber(branch, service);
     let history = await getDailyHistory(branch, service);
     return history;
   } catch (err) {
@@ -643,8 +696,8 @@ const getPriorityCustomers = async (branch, service) => {
         priorityCustomerArray.push(doc.data());
       }
     });
-    if (!priorityCustomerArray.length > 0) console.log("True");
-    setPriorityCustomersNotAvailable(branch, service);
+    if (!priorityCustomerArray.length > 0)
+      setPriorityCustomersNotAvailable(branch, service);
     return priorityCustomerArray;
   } catch (err) {
     console.error("Error getting priority customers:\n", err);
@@ -666,13 +719,9 @@ const setPriorityCustomersNotAvailable = async (branch, service) => {
   let branchDetails = await getDoc(branchRef);
   try {
     await setDoc(
-      branchRef,
-      { numberOfPeopleBeforeVIP: branchDetails.data().priorityMaxWait || 3 },
-      { merge: true }
-    );
-    await setDoc(
       serviceRef,
       {
+        numberOfPeopleBeforeVIP: branchDetails.data().priorityMaxWait || 3,
         priorityCustomersAvailable: false, // Set to false to indicate that priority customers are not available
       },
       { merge: true }
@@ -759,9 +808,17 @@ const deleteAllHistory = async (branch) => {
   return historyDocs;
 };
 
-const setPriorityWaitTo = async (branch, to) => {
-  const branchRef = doc(db, "Organizations", "Apex Bank", "branches", branch);
-  await setDoc(branchRef, { numberOfPeopleBeforeVIP: to }, { merge: true });
+const setPriorityWaitTo = async (branch, service, to) => {
+  const serviceRef = doc(
+    db,
+    "Organizations",
+    "Apex Bank",
+    "branches",
+    branch,
+    "availableServices",
+    service
+  );
+  await setDoc(serviceRef, { numberOfPeopleBeforeVIP: to }, { merge: true });
 };
 
 const initializeBranch = async (branch) => {
@@ -770,7 +827,6 @@ const initializeBranch = async (branch) => {
     branchRef,
     {
       priorityType: "Same Queue",
-      numberOfPeopleBeforeVIP: 3,
       priorityMaxWait: 3,
     },
     { merge: true }
@@ -794,6 +850,7 @@ const initializeService = async (branch, service) => {
       priorityCustomersAvailable: true,
       priorityLastNumber: 0,
       serviceCurrentNumber: 0,
+      numberOfPeopleBeforeVIP: 3,
       status: "close",
     },
     { merge: true }
@@ -974,6 +1031,7 @@ module.exports = {
   updateServiceQueueNumber,
   getAllTransactionsByStaff,
   updatePriorityQueueDetails,
+  incrementServiceQueueNumber,
   setCustomerServiceToHandled,
   decrementPriorityWaitingNumber,
   setPriorityCustomersNotAvailable,

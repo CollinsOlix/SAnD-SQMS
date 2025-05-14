@@ -33,7 +33,11 @@ function BaseLayout() {
 
   const listenForQueueNumberUpdates = () => {};
 
-  useEffect(() => {}, [customerBranchOption]);
+
+
+  useEffect(() => {
+    // const socket = new WebSocket(socketUrl);
+  }, [customerBranchOption, staffDetails]);
 
   return (
     <AppContext

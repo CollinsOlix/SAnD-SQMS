@@ -19,6 +19,7 @@ const {
   deleteAllHistory,
   closeQueue,
   setPriorityWaitTo,
+  incrementServiceQueueNumber,
 } = require("../config/firestoreFunctions");
 
 module.exports = function (app) {
@@ -43,7 +44,6 @@ module.exports = function (app) {
     } else {
       try {
         const staffDetails = await getStaffData(staffId, password);
-        console.log("staff det: ", staffDetails);
         if (staffDetails) {
           const secretStaffToken = jwt.sign(
             {
@@ -124,7 +124,7 @@ module.exports = function (app) {
       serviceDuration,
     } = request.body;
     let sessionHistory;
-
+    console.log("SessionId: ", sessionId);
     if (sessionId) {
       sessionHistory = await addSessionToHistory(
         branch,
@@ -136,8 +136,11 @@ module.exports = function (app) {
       await setCustomerServiceToHandled(sessionId, service);
       if (customerDetails.priority == true) {
         await updatePriorityQueueDetails(branch, service);
+      } else {
+        await incrementServiceQueueNumber(branch, service);
       }
     } else {
+      await incrementServiceQueueNumber(branch, service);
       sessionHistory = await getDailyHistory(branch, service);
     }
 
@@ -151,16 +154,15 @@ module.exports = function (app) {
       " Normies: ",
       waitingCustomers.length
     );
-    console.log("B: ", branchData, " S: ", serviceData);
     if (
       serviceData.priorityCustomersAvailable ||
       priorityCustomers.length > 0
     ) {
-      if (branchData.numberOfPeopleBeforeVIP > 0) {
+      if (serviceData.numberOfPeopleBeforeVIP > 0) {
         if (waitingCustomers.length > 0) {
-          await decrementPriorityWaitingNumber(branch);
+          await decrementPriorityWaitingNumber(branch, service);
         } else {
-          await setPriorityWaitTo(branch, 0);
+          await setPriorityWaitTo(branch, service, 0);
           response.json({
             sessionHistory,
             waitingCustomers: priorityCustomers,

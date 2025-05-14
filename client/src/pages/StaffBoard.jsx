@@ -100,9 +100,14 @@ function StaffBoard() {
             }
             let waitListed = filterByServiceName(data, staffDetails.assignedTo);
             console.log("Waitlisted: ", waitListed);
+            console.log("STfab: ", staffBoardDetails);
             setWaitingCustomers((e) => (e = waitListed));
             if (staffBoardDetails) {
-              let active = waitListed[0];
+              let active = waitListed.find(
+                (item) =>
+                  item.service[staffBoardDetails.serviceName].ticketNumber ===
+                  staffBoardDetails.serviceCurrentNumber
+              );
               if (waitListed.length)
                 waitListed.forEach((cust) => {
                   if (
@@ -193,7 +198,12 @@ function StaffBoard() {
         setDailyHistory((e) => (e = data.sessionHistory));
         setWaitingCustomers((e) => (e = data.waitingCustomers));
         if (staffBoardDetails) {
-          let active = data.waitingCustomers[0];
+          console.log("Staff b deets: ", staffBoardDetails);
+          let active = data.waitingCustomers.find(
+            (item) =>
+              item.service[staffBoardDetails.serviceName].ticketNumber ===
+              staffBoardDetails.serviceCurrentNumber
+          );
           if (data.waitingCustomers.length)
             data.waitingCustomers.forEach((cust) => {
               if (
@@ -345,8 +355,10 @@ function StaffBoard() {
           <p className="mediumText">Ticket Number</p>
           <div className="ticketRectangle">
             <h1>
-              {activeCustomer?.service?.[staffDetails?.assignedTo]
-                ?.ticketNumber || 0}
+              {waitingCustomers[0]?.customerDetails?.priority
+                ? waitingCustomers[0]?.service[staffDetails.assignedTo]
+                    .ticketNumber
+                : staffBoardDetails.serviceCurrentNumber || 0}
             </h1>
           </div>
           <p className="mediumText darkBlue">Serving Time</p>

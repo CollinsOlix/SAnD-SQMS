@@ -19,15 +19,13 @@ function Test() {
     }
   }, [lastMessage]);
 
-  const handleSendMessage = useCallback(
-    () =>
-      sendMessage(
-        JSON.stringify({
-          branch: "Apex Bank ( Girne )",
-        })
-      ),
-    []
-  );
+  const handleSendMessage = useCallback(() =>
+    // sendMessage(
+    //   JSON.stringify({
+    //     branch: "Apex Bank ( Girne )",
+    //   })
+    // ),
+    {}, []);
 
   const connectionStatus = {
     [ReadyState.CONNECTING]: "Connecting",

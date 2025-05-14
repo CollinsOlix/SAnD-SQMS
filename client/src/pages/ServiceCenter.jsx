@@ -45,16 +45,7 @@ function ServiceCenter() {
     setSessionDetails,
     SERVER_URL,
   } = useContext(AppContext);
-
-  const [socketUrl, setSocketUrl] = useState(SERVER_URL);
-  const [messageHistory, setMessageHistory] = useState([]);
-  const { sendMessage, lastMessage, readyState } = useWebSocket(socketUrl);
-
-  useEffect(() => {
-    if (lastMessage !== null) {
-      setMessageHistory((prev) => prev.concat(lastMessage));
-    }
-  }, [lastMessage]);
+  const { sendMessage, lastMessage } = useWebSocket(SERVER_URL);
 
   //
   //Requesting for user logged in status
@@ -90,12 +81,12 @@ function ServiceCenter() {
       })
         .then((response) => response.json())
         .then((data) => {
+          setAvailableServicesInBranch((e) => (e = data));
           sendMessage(
             JSON.stringify({
               branch,
             })
           );
-          setAvailableServicesInBranch((e) => (e = data));
         });
     },
     [SERVER_URL, setAvailableServicesInBranch]
@@ -115,6 +106,7 @@ function ServiceCenter() {
       .then((response) => response.json())
       .then((data) => {
         setSessionDetails((e) => (e = data));
+
         setCustomerBranchOption(data.branch);
         // setSessionDetails(data.service);
         fetchServices(data.branch);
@@ -154,7 +146,7 @@ function ServiceCenter() {
   }, [getSessionData, isUserLoggedIn]);
 
   useEffect(() => {
-    console.log("Avail: ", availableServicesInBranch);
+    console.log("Avail: ", sessionDetails);
     if (availableServicesInBranch.length > 0 && sessionDetails) {
       setShouldDisplayLoadingAnimation((e) => (e = false));
     }
@@ -295,6 +287,18 @@ function ServiceCenter() {
             >
               {sessionDetails &&
                 Object.keys(sessionDetails.service).map((item, index) => {
+                  if (
+                    sessionDetails.service[item].ticketNumber -
+                      availableServicesInBranch.find(
+                        (service) =>
+                          service.serviceName ===
+                          sessionDetails.service[item].serviceName
+                      ).serviceCurrentNumber <
+                      0 &&
+                    !sessionDetails.customerDetails.priority
+                  ) {
+                    getSessionData();
+                  }
                   return (
                     <div>
                       <QueuePicker
@@ -314,13 +318,15 @@ function ServiceCenter() {
                                 service?.serviceName ===
                                 sessionDetails.service[item].serviceName
                             ).serviceCurrentNumber || 0,
-                          peopleWaiting:
+                          peopleWaiting: Math.max(
                             sessionDetails.service[item].ticketNumber -
                               availableServicesInBranch.find(
                                 (service) =>
                                   service.serviceName ===
                                   sessionDetails.service[item].serviceName
-                              ).serviceCurrentNumber || 0,
+                              ).serviceCurrentNumber,
+                            0
+                          ),
                         }}
                       />
                     </div>
@@ -342,6 +348,7 @@ function ServiceCenter() {
       </BackDrop>
     );
   }
+  // return <div>Hello World</div>;
 }
 
 export default ServiceCenter;
