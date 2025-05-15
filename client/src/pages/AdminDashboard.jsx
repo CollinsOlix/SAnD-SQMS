@@ -18,6 +18,7 @@ import RemoveServiceModal from "../components/RemoveServiceModal";
 import StaffAnalyticsModal from "../components/StaffAnalyticsModal";
 import QueueAnalyticsModal from "../components/QueueAnalyticsModal";
 import AssignStaffToServiceModal from "../components/AssignStaffToServiceModal";
+import PrioritySchemeModal from "../components/PrioritySchemeModal";
 
 function AdminDashboard() {
   let { id } = useParams();
@@ -307,6 +308,14 @@ function AdminDashboard() {
         return <NewQueueModal />;
       case "Add a Service":
         return <NewServiceModal />;
+      case "Set Priority Scheme":
+        return (
+          <PrioritySchemeModal
+            setIsModalOpen={setIsModalOpen}
+            availableBranches={availableBranches}
+            staffDetails={staffDetails}
+          />
+        );
       case "Remove a Service":
         return (
           <RemoveServiceModal

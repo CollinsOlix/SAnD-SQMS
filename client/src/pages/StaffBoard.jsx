@@ -77,6 +77,7 @@ function StaffBoard() {
     );
     setStaffBoardDetails((e) => (e = serviceDeets));
   };
+
   const getWaitingCustomers = async (branch) => {
     if (staffDetails) {
       try {
@@ -258,6 +259,7 @@ function StaffBoard() {
       }),
     }).then(async () => await fetchServiceDetails());
   };
+
   const openQueue = async () => {
     await fetch(`${SERVER_URL}/staff/open-queue`, {
       method: "POST",
@@ -315,12 +317,6 @@ function StaffBoard() {
       setShouldDisplayLoadingIndicator(false);
   }, [staffBoardDetails, waitingCustomers]);
 
-  useEffect(() => {
-    console.log(
-      "active: ",
-      activeCustomer?.service?.[staffDetails?.assignedTo]?.ticketNumber
-    );
-  }, [activeCustomer]);
   //
   //Displayed content
   return shouldShowLoadingIndicator ? (

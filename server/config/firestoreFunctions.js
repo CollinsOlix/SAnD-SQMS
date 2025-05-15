@@ -590,15 +590,7 @@ const createNewService = async (branch, service) => {
     if (docExists.exists()) {
       return "This Service already exists";
     } else {
-      await setDoc(servicesRef, {
-        lastQueueNumber: 0,
-        priorityCurrentNumber: 0,
-        priorityCustomersAvailable: true,
-        priorityLastNumber: 0,
-        serviceCurrentNumber: 0,
-        serviceName: service,
-        status: "close",
-      });
+      await initializeService(branch, service);
       return "Service Created Successfully";
     }
   } catch (err) {
@@ -643,7 +635,7 @@ const closeQueue = async (branch, service) => {
   try {
     await updateDoc(
       queueRef,
-      { status: "closed", serviceCurrentNumber: 0 },
+      { status: "closed", closingDate: Timestamp.now() },
       { merge: true }
     );
   } catch (err) {
@@ -661,6 +653,14 @@ const openQueue = async (branch, service) => {
     service
   );
   try {
+    let queueDoc = await getDoc(queueRef);
+    const { seconds, nanoseconds } = queueDoc.data().closingDate;
+    if (
+      new Date(seconds * 1000 + nanoseconds / 1e6).getDate() <
+      new Date().getDate()
+    ) {
+      initializeService(branch, service);
+    }
     await updateDoc(queueRef, { status: "open" }, { merge: true });
   } catch (err) {
     console.error("Error closing queue:\n", err);
@@ -849,9 +849,9 @@ const initializeService = async (branch, service) => {
       priorityCurrentNumber: 0,
       priorityCustomersAvailable: true,
       priorityLastNumber: 0,
-      serviceCurrentNumber: 0,
+      serviceCurrentNumber: 1,
       numberOfPeopleBeforeVIP: 3,
-      status: "close",
+      status: "closed",
     },
     { merge: true }
   );

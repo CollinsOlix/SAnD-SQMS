@@ -52,6 +52,7 @@ function DailyHistory({
         <button onClick={isQueueOpen === "closed" ? openQueue : closeQueue}>
           {isQueueOpen === "closed" ? "Open Queue" : "Close Queue"}
         </button>
+
         <button
           style={{
             backgroundColor: isQueueOpen === "closed" && "gray",

@@ -1,6 +1,7 @@
 import AddIcon from "@mui/icons-material/Add";
 import Delete from "@mui/icons-material/Delete";
 import AnalyticsIcon from "@mui/icons-material/Analytics";
+import SettingsIcon from "@mui/icons-material/Settings";
 import SupervisorAccountIcon from "@mui/icons-material/SupervisorAccount";
 import SupportAgentIcon from "@mui/icons-material/SupportAgent";
 
@@ -39,6 +40,20 @@ const actionServices = [
           onClick: addBranch,
           action: "Remove a Branch",
           requiresSuperAdmin: true,
+        },
+      },
+      {
+        "Set Priority Scheme": {
+          icon: (
+            <SettingsIcon
+              sx={{
+                fontSize: 70,
+              }}
+            />
+          ),
+          onClick: addBranch,
+          action: "Set Priority Scheme",
+          requiresSuperAdmin: false,
         },
       },
       {

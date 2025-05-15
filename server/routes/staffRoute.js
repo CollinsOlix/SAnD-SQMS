@@ -204,7 +204,7 @@ module.exports = function (app) {
     const { branch, service } = request.body;
     try {
       await openQueue(branch, service);
-      response.json("Queue Closed");
+      response.json("Queue Opened");
     } catch (err) {
       console.error("Error closing queue: ", err);
       response.json("Error closing queue");
