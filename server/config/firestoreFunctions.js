@@ -998,6 +998,34 @@ const getRealTimeQueueData = (branch) => {
   }
   return queueData;
 };
+
+const fetchWaitTime = async (branch, service) => {
+  let allDocs = [];
+  const serviceRef = collection(
+    db,
+    "Organizations",
+    "Apex Bank",
+    "branches",
+    branch,
+    "history"
+  );
+  const q = query(
+    serviceRef,
+    where("service", "==", service),
+    where("date", ">=", getToday())
+  );
+  const historyDocs = await getDocs(q);
+  historyDocs.forEach((doc) => allDocs.push(doc.data()));
+  let waitTime = 0;
+  if (allDocs.length > 0) {
+    allDocs.forEach((doc) => (waitTime += doc.serviceDuration));
+    waitTime = waitTime / allDocs.length; // Average wait time
+  } else {
+    waitTime = 0;
+  }
+  return waitTime;
+};
+
 module.exports = {
   addBranch,
   openQueue,
@@ -1008,6 +1036,7 @@ module.exports = {
   deleteService,
   getBranchInfo,
   fetchServices,
+  fetchWaitTime,
   getCustomerData,
   getDailyHistory,
   createNewService,

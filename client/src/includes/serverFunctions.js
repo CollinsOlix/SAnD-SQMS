@@ -152,6 +152,26 @@ export const fetchServiceAnalytics = async (branch, service) => {
   })
     .then((response) => response.json())
     .then((data) => (respData = data));
+
+  return respData;
+};
+
+export const serviceWaitTime = async (branch, service) => {
+  console.log("B");
+  console.log(branch, service);
+  let respData;
+  await fetch(`${SERVER_URL}/service/service-time`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      branch,
+      service,
+    }),
+  })
+    .then((response) => response.json())
+    .then((data) => (respData = data));
   console.log(respData);
   return respData;
 };

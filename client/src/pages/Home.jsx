@@ -57,10 +57,12 @@ function Home() {
   const fetchServices = async (selectedBranch) => {
     let allServices = await getServicesInBranch(selectedBranch);
     setAvailableServices(allServices);
-    setService(
-      (e) =>
-        (e = allServices.find((item) => item?.status !== "closed").serviceName)
-    );
+    setService((e) => {
+      console.log("All Ser: ", allServices);
+      return (e = allServices.find(
+        (item) => item?.status !== "closed"
+      ).serviceName);
+    });
   };
   const userHasSession = useCallback(async () => {
     await fetch(`${SERVER_URL}/`, {
@@ -132,7 +134,11 @@ function Home() {
       </div>
       <div className="home-a">
         <div className="home-b">
-          <Board />
+          <Board
+            service={availableServices?.find(
+              (item) => (item.serviceName = service)
+            )}
+          />
         </div>
         <div className="home-c">
           <div className="home-login-container">
@@ -236,11 +242,11 @@ function Home() {
                   {availableServices &&
                     availableServices.map((s, id) => (
                       <option
-                        key={s.serviceName + id}
-                        value={s.serviceName}
+                        key={s?.serviceName + id}
+                        value={s?.serviceName}
                         disabled={s?.status === "closed"}
                       >
-                        {s.serviceName}
+                        {s?.serviceName}
                       </option>
                     ))}
                 </select>

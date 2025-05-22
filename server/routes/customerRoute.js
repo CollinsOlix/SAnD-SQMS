@@ -3,7 +3,7 @@ const cors = require("cors");
 const express = require("express");
 const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
-const { endSession } = require("../config/firestoreFunctions");
+const { endSession, fetchWaitTime } = require("../config/firestoreFunctions");
 
 module.exports = function (app) {
   app.use(express.urlencoded({ extended: false }));
@@ -30,5 +30,11 @@ module.exports = function (app) {
       if (request.cookies.sqms) response.clearCookie("sqms");
     }
     response.json(isSuccessful);
+  });
+  app.post("/service/service-time", async (request, response) => {
+    const { branch, service } = request.body;
+    console.log("req");
+    console.log(request.body);
+    await fetchWaitTime(branch, service);
   });
 };

@@ -4,11 +4,8 @@ function initializeMonth(year, month) {
 
   let numberOfDays = new Date(year, month + 1, 0);
   let dayOne = new Date(year, month, 1);
-  console.log(dayOne);
   dayOne = dayOne.toLocaleDateString("en-US", { weekday: "short" });
-  console.log(numberOfDays.toLocaleDateString("en-US", { month: "long" }));
   numberOfDays = numberOfDays.getDate();
-  console.log(numberOfDays);
 
   //
   //

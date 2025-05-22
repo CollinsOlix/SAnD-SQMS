@@ -1,7 +1,26 @@
 import React from "react";
 import "../styles/home.css";
+import { useEffect } from "react";
+import { serviceWaitTime } from "../includes/serverFunctions";
+import { useContext } from "react";
+import AppContext from "../includes/context";
+import { useState } from "react";
 
-function Board() {
+function Board({ service }) {
+  const { customerBranchOption } = useContext(AppContext);
+  const [avgWaitTime, setAvgWaitTime] = useState(0);
+  const fetchServiceWaitTime = async () => {
+    let timee = await serviceWaitTime(
+      customerBranchOption,
+      service?.serviceName
+    );
+    setAvgWaitTime(timee);
+  };
+  useEffect(() => {
+    if (service?.serviceName) {
+      fetchServiceWaitTime();
+    }
+  }, [service]);
   return (
     <div className="board">
       <div className="home-day-and-time">
@@ -49,16 +68,30 @@ function Board() {
       </div>
       <div className="status-section">
         <div className="current-status">Currently Moderately Busy</div>
-        <div className="date">Friday, March 8, 2025</div>
+        <div className="date">
+          {new Date(Date.now()).toLocaleString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+            weekday: "long",
+            timeZone: "UTC",
+          })}
+        </div>
       </div>
       <div className="metrics-section">
         <div className="metric">
-          <span className="metric-value">20</span>
+          <span className="metric-value">
+            {Math.max(
+              service?.lastQueueNumber - service?.serviceCurrentNumber,
+              0
+            ) || 0}
+          </span>
           <div className="metric-label">Visitor's currently waiting</div>
         </div>
         <div className="metric">
           <span className="metric-value">
-            10<span style={{ fontSize: "24px" }}>mins</span>
+            {avgWaitTime / 60}
+            <span style={{ fontSize: "24px" }}>mins</span>
           </span>
           <div className="metric-label">Average waiting time</div>
         </div>

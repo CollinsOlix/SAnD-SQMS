@@ -17,7 +17,6 @@ export default function BranchAnalyticsModal({
   const [shouldDisplayLoadingAnimation, setShouldDisplayLoadingAnimation] =
     useState(true);
   //   const fetchServices = async () => {
-  //     console.log(branchNameRef.current.value);
   //     let serviceDeets = await getServicesInBranch(branchNameRef.current.value);
   //     setServiceState((e) => (e = serviceDeets));
   //   };
@@ -36,7 +35,7 @@ export default function BranchAnalyticsModal({
   const branchAnalytics = async () => {
     setShouldDisplayLoadingAnimation(true);
     let analyticsData = await fetchBranchAnalytics(branchNameRef.current.value);
-    console.log("analData: ", analyticsData);
+
     setAnalytics((e) => (e = analyticsData));
     let weekData = {
       Monday: 0,
@@ -59,7 +58,6 @@ export default function BranchAnalyticsModal({
     return analyticsData;
   };
   useEffect(() => {
-    console.log(availableBranches);
     branchAnalytics();
   }, []);
 
