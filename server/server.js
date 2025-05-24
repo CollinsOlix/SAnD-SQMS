@@ -48,21 +48,7 @@ var corsOptions = {
 
 app.use(cors(corsOptions));
 
-//
-//CORS policies
-// app.options("*", cors(corsOptions)); // Handle preflight requests
 
-// app.use((req, res, next) => {
-//   res.header(
-//     "Access-Control-Allow-Origin",
-//     "https://sdnxn5zx-3000.euw.devtunnels.ms"
-//   );
-//   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-//   res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-//   res.header("Access-Control-Allow-Credentials", "true");
-//   res.header("Access-Control-Max-Age", "86400");
-//   next();
-// });
 
 //Route to send customer details to
 app.post("/", async (request, response) => {

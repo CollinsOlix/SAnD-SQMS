@@ -1,10 +1,8 @@
 import React from "react";
 import "../styles/home.css";
-import { useEffect } from "react";
+import { useEffect, useContext, useState } from "react";
 import { serviceWaitTime } from "../includes/serverFunctions";
-import { useContext } from "react";
 import AppContext from "../includes/context";
-import { useState } from "react";
 
 function Board({ service }) {
   const { customerBranchOption } = useContext(AppContext);
@@ -19,6 +17,7 @@ function Board({ service }) {
   useEffect(() => {
     if (service?.serviceName) {
       fetchServiceWaitTime();
+      console.log(service.serviceName, ": change");
     }
   }, [service]);
   return (

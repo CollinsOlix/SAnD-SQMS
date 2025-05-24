@@ -229,7 +229,7 @@ const incrementServiceQueueNumber = async (branch, service) => {
   if (
     serviceToUpdate.data().lastQueueNumber -
       serviceToUpdate.data().serviceCurrentNumber >
-    10
+    2
   ) {
     //find the person who's ticket number is 10 numbers ahead of the current number
     //and send them a notification
@@ -240,7 +240,7 @@ const incrementServiceQueueNumber = async (branch, service) => {
       where(
         `service.${service}.ticketNumber`,
         "==",
-        serviceToUpdate.data().serviceCurrentNumber + 10
+        serviceToUpdate.data().serviceCurrentNumber + 2
       )
     );
     const customerDoc = await getDocs(customerRef);
