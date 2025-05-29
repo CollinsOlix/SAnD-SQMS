@@ -1026,6 +1026,24 @@ const fetchWaitTime = async (branch, service) => {
   return waitTime;
 };
 
+const setBranchPriorityScheme = async (branch, scheme, waitNumber) => {
+  const branchRef = doc(db, "Organizations", "Apex Bank", "branches", branch);
+  try {
+    await setDoc(
+      branchRef,
+      {
+        priorityType: scheme,
+        priorityMaxWait: waitNumber,
+      },
+      { merge: true }
+    );
+    return true;
+  } catch (err) {
+    console.error("Error setting branch priority scheme: ", err);
+    return false;
+  }
+};
+
 module.exports = {
   addBranch,
   openQueue,
@@ -1057,6 +1075,7 @@ module.exports = {
   fetchBranchAnalytics,
   getPriorityCustomers,
   setBranchDefaultValues,
+  setBranchPriorityScheme,
   updateServiceQueueNumber,
   getAllTransactionsByStaff,
   updatePriorityQueueDetails,

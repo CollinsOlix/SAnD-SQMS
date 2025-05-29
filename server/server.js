@@ -48,8 +48,6 @@ var corsOptions = {
 
 app.use(cors(corsOptions));
 
-
-
 //Route to send customer details to
 app.post("/", async (request, response) => {
   let { customerNumber, firstName, service, branch } = request.body;
@@ -89,11 +87,8 @@ app.post("/", async (request, response) => {
       if (typeof customerDetails === "string") {
         response
           .setHeader("Access-Control-Allow-Origin", `${request.headers.origin}`)
-          .json({
-            customerDetails,
-            signedIn: typeof customerDetails === "string" ? false : true,
-            sessionId: newSessionId,
-          });
+          .json("Invalid First Name or Customer Number");
+        return;
       }
       const newSessionId = await createNewSession(
         customerNumber,
@@ -101,6 +96,16 @@ app.post("/", async (request, response) => {
         service,
         customerDetails
       );
+      if (typeof customerDetails === "string") {
+        response
+          .setHeader("Access-Control-Allow-Origin", `${request.headers.origin}`)
+          .json({
+            customerDetails,
+            signedIn: typeof customerDetails === "string" ? false : true,
+            sessionId: newSessionId,
+          });
+      }
+
       const secretToken = jwt.sign(
         {
           customerNumber,

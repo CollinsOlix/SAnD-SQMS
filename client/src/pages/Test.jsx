@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import BackDrop from "../components/BackDrop";
-import { FormGroup } from "@mui/material";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 
 const SERVER_URL = "http://localhost:5000";

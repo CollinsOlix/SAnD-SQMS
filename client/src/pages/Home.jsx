@@ -18,6 +18,7 @@ function Home() {
   const [errorMessage, setErrorMessage] = useState();
   const [availableBranches, setAvailableBranches] = useState();
   const [availableServices, setAvailableServices] = useState();
+  const [activeService, setActiveService] = useState();
   const [firstName, setFirstName] = useState();
   const [customerNumber, setCustomerNumber] = useState();
   const [trials, setTrials] = useState(0);
@@ -134,16 +135,12 @@ function Home() {
       </div>
       <div className="home-a">
         <div className="home-b">
-          <Board
-            service={availableServices?.find(
-              (item) => (item.serviceName = service)
-            )}
-          />
+          <Board service={activeService} />
         </div>
         <div className="home-c">
           <div className="home-login-container">
             <h2>Sign in to SAnD's SQMS</h2>
-
+            <br />
             <div className="home-input">
               <div
                 className="error-container"
@@ -236,7 +233,13 @@ function Home() {
                   ref={serviceOptionsRef}
                   id="serviceOptions"
                   onChange={(e) => {
-                    setService(e.target.value);
+                    console.log("Service Det: ", e.target.value);
+                    setService((_) => (_ = e.target.value));
+                    setActiveService(
+                      availableServices?.find(
+                        (item) => item.serviceName === e.target.value
+                      )
+                    );
                   }}
                 >
                   {availableServices &&

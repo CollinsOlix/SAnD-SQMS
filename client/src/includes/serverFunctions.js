@@ -175,3 +175,21 @@ export const serviceWaitTime = async (branch, service) => {
   console.log(respData);
   return respData;
 };
+export const setBranchPriorityScheme = async (branch, scheme, waitNumber) => {
+  let respData;
+  await fetch(`${SERVER_URL}/admin/set-priority-scheme`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      branch,
+      scheme,
+      waitNumber,
+    }),
+  })
+    .then((response) => response.json())
+    .then((data) => (respData = data));
+  console.log(respData);
+  return respData;
+};

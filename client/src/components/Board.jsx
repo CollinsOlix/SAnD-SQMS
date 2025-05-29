@@ -3,21 +3,23 @@ import "../styles/home.css";
 import { useEffect, useContext, useState } from "react";
 import { serviceWaitTime } from "../includes/serverFunctions";
 import AppContext from "../includes/context";
+import { useCallback } from "react";
 
 function Board({ service }) {
   const { customerBranchOption } = useContext(AppContext);
   const [avgWaitTime, setAvgWaitTime] = useState(0);
-  const fetchServiceWaitTime = async () => {
+  const fetchServiceWaitTime = useCallback(async () => {
     let timee = await serviceWaitTime(
       customerBranchOption,
       service?.serviceName
     );
     setAvgWaitTime(timee);
-  };
+  }, [customerBranchOption, service?.serviceName]);
   useEffect(() => {
+    console.log("Service: ", service);
     if (service?.serviceName) {
       fetchServiceWaitTime();
-      console.log(service.serviceName, ": change");
+      console.log(service?.serviceName, ": change");
     }
   }, [service]);
   return (

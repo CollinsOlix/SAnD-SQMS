@@ -12,6 +12,7 @@ const {
   getServiceAnalytics,
   initializeService,
   initializeBranch,
+  setBranchPriorityScheme,
 } = require("../config/firestoreFunctions");
 
 module.exports = function (app) {
@@ -49,6 +50,15 @@ module.exports = function (app) {
     console.log("B: ", branch, service);
     const serviceAdded = await deleteService(branch, service);
     response.json(serviceAdded);
+  });
+  app.post("/admin/set-priority-scheme", async (request, response) => {
+    const { branch, scheme, waitNumber } = request.body;
+    const isPrioritySchemeSet = await setBranchPriorityScheme(
+      branch,
+      scheme,
+      waitNumber
+    );
+    response.json(isPrioritySchemeSet);
   });
 
   app.get("/admin/staff", async (request, response) => {
