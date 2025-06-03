@@ -65,8 +65,8 @@ function BaseLayout() {
           <Route path="/qrcode" element={<Afterqrcode />} />
           <Route path="/staff/board" element={<StaffBoard />} />
           <Route path="/admin/:id" element={<AdminDashboard />} />
-          {/* <Route path="/sessions/:id" element={<OnlineServiceCenter />} /> */}
           <Route path="/sessions/:id" element={<ServiceCenter />} />
+          {/* <Route path="/sessions/:id" element={<OnlineServiceCenter />} /> */}
         </Routes>
       </BrowserRouter>
     </AppContext>

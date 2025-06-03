@@ -19,6 +19,7 @@ import StaffAnalyticsModal from "../components/StaffAnalyticsModal";
 import QueueAnalyticsModal from "../components/QueueAnalyticsModal";
 import AssignStaffToServiceModal from "../components/AssignStaffToServiceModal";
 import PrioritySchemeModal from "../components/PrioritySchemeModal";
+import NewBranchModal from "../components/NewBranchModal";
 
 function AdminDashboard() {
   let { id } = useParams();
@@ -93,46 +94,7 @@ function AdminDashboard() {
       </div>
     );
   };
-  const NewBranchModal = () => {
-    return (
-      <div style={{ width: "100%" }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "1em",
-          }}
-        >
-          <h3>Create New Branch</h3>
-          <span
-            onClick={() => setIsModalOpen(false)}
-            style={{
-              cursor: "pointer",
-              padding: "0.3em 0.5em",
-              backgroundColor: "#12326e",
-              color: "white",
-              borderRadius: "10%",
-            }}
-          >
-            close
-          </span>
-        </div>
-        <form>
-          <label htmlFor="branchName">Branch Name (required)</label>
-          <br />
-          <input type="text" id="branchName" className="adminDashInput" />
-          <br />
-          <label htmlFor="branchLocation">
-            Branch Location Address (required)
-          </label>
-          <br />
-          <input type="text" id="branchLocation" className="adminDashInput" />
-        </form>
-        <button>Create Branch</button>
-      </div>
-    );
-  };
+
   const NewQueueModal = () => {
     return (
       <div style={{ width: "100%" }}>
@@ -303,7 +265,7 @@ function AdminDashboard() {
   const renderModal = () => {
     switch (activeModal) {
       case "Add Branch":
-        return <NewBranchModal />;
+        return <NewBranchModal setIsModalOpen={setIsModalOpen} />;
       case "Add Queue":
         return <NewQueueModal />;
       case "Add a Service":
@@ -435,7 +397,18 @@ function AdminDashboard() {
           {actionServices &&
             actionServices.map((service, index) => {
               return (
-                <div key={index}>
+                <div
+                  key={index}
+                  style={{
+                    // backgroundColor: "green",
+                    margin: "0.4em 0",
+                    border: "1px solid #fff",
+                    padding: "0.4em",
+                    borderRadius: "0.3em",
+                    backgroundColor: "#3a72da",
+                    color: "#0c2a5d",
+                  }}
+                >
                   <h2 style={{ color: "#fff" }}>{Object.keys(service)[0]}</h2>
 
                   <hr />

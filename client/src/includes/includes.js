@@ -84,33 +84,33 @@ const actionServices = [
           requiresSuperAdmin: false,
         },
       },
-      {
-        "Add Staff": {
-          icon: (
-            <SupportAgentIcon
-              sx={{
-                fontSize: 70,
-              }}
-            />
-          ),
-          action: "Assign Staff to a Service",
-          onClick: addBranch,
-          requiresSuperAdmin: false,
-        },
-      },
-      {
-        "Add Admin": {
-          icon: (
-            <SupervisorAccountIcon
-              sx={{
-                fontSize: 70,
-              }}
-            />
-          ),
-          onClick: addBranch,
-          requiresSuperAdmin: true,
-        },
-      },
+      // {
+      //   "Add Staff": {
+      //     icon: (
+      //       <SupportAgentIcon
+      //         sx={{
+      //           fontSize: 70,
+      //         }}
+      //       />
+      //     ),
+      //     action: "Assign Staff to a Service",
+      //     onClick: addBranch,
+      //     requiresSuperAdmin: false,
+      //   },
+      // },
+      // {
+      //   "Add Admin": {
+      //     icon: (
+      //       <SupervisorAccountIcon
+      //         sx={{
+      //           fontSize: 70,
+      //         }}
+      //       />
+      //     ),
+      //     onClick: addBranch,
+      //     requiresSuperAdmin: true,
+      //   },
+      // },
     ],
   },
   {

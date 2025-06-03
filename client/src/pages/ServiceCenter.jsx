@@ -146,7 +146,7 @@ function ServiceCenter() {
   }, [getSessionData, isUserLoggedIn]);
 
   useEffect(() => {
-    console.log("Avail: ", sessionDetails);
+    console.log("Session details: ", sessionDetails);
     if (availableServicesInBranch.length > 0 && sessionDetails) {
       setShouldDisplayLoadingAnimation((e) => (e = false));
     }
@@ -154,8 +154,6 @@ function ServiceCenter() {
 
   useEffect(() => {
     if (lastMessage) {
-      console.log("This part ran", Array.isArray(JSON.parse(lastMessage.data)));
-      console.log("This part ran a", availableServicesInBranch);
       lastMessage?.data &&
         setAvailableServicesInBranch((_) => (_ = JSON.parse(lastMessage.data)));
     }
@@ -301,47 +299,76 @@ function ServiceCenter() {
                   }
                   return (
                     <div>
+                      {console.log(
+                        sessionDetails.service[item].ticketNumber,
+                        availableServicesInBranch.find(
+                          (service) =>
+                            service.serviceName ===
+                            sessionDetails.service[item].serviceName
+                        ).specialQueueCurrentNumber,
+                        sessionDetails.service[item].ticketNumber -
+                          availableServicesInBranch.find(
+                            (service) =>
+                              service.serviceName ===
+                              sessionDetails.service[item].serviceName
+                          ).specialQueueCurrentNumber
+                      )}
                       <QueuePicker
-                        noWaitingNumber={
+                        isPriorityCustomer={
                           sessionDetails.customerDetails.priority
                         }
                         active={true}
                         index={index}
                         key={index + "active"}
                         item={{
-                          serviceName: sessionDetails.service[item].serviceName,
-                          ticketNumber:
-                            sessionDetails.service[item].ticketNumber,
+                          ...sessionDetails.service[item],
                           serviceCurrentNumber:
                             availableServicesInBranch.find(
                               (service) =>
                                 service?.serviceName ===
                                 sessionDetails.service[item].serviceName
                             ).serviceCurrentNumber || 0,
-                          peopleWaiting: Math.max(
-                            sessionDetails.service[item].ticketNumber -
-                              availableServicesInBranch.find(
-                                (service) =>
-                                  service.serviceName ===
-                                  sessionDetails.service[item].serviceName
-                              ).serviceCurrentNumber,
-                            0
-                          ),
+                          peopleWaiting:
+                            sessionDetails.priorityScheme === "Same Queue"
+                              ? Math.max(
+                                  sessionDetails.service[item].ticketNumber -
+                                    availableServicesInBranch.find(
+                                      (service) =>
+                                        service.serviceName ===
+                                        sessionDetails.service[item].serviceName
+                                    ).serviceCurrentNumber,
+                                  0
+                                )
+                              : Math.max(
+                                  sessionDetails.service[item].ticketNumber -
+                                    availableServicesInBranch.find(
+                                      (service) =>
+                                        service.serviceName ===
+                                        sessionDetails.service[item].serviceName
+                                    ).specialQueueCurrentNumber,
+                                  0
+                                ),
                         }}
                       />
                     </div>
                   );
                 })}
 
-              {availableServicesInBranch.map((item, index) => {
-                if (
-                  !(sessionDetails && sessionDetails.service[item.serviceName])
-                ) {
-                  return <QueuePicker index={index} key={index} item={item} />;
-                } else {
-                  return <></>;
-                }
-              })}
+              {sessionDetails.priorityScheme === "Same Queue" &&
+                availableServicesInBranch.map((item, index) => {
+                  if (
+                    !(
+                      sessionDetails && sessionDetails.service[item.serviceName]
+                    ) &&
+                    item.serviceName !== "Special Queue"
+                  ) {
+                    return (
+                      <QueuePicker index={index} key={index} item={item} />
+                    );
+                  } else {
+                    return <></>;
+                  }
+                })}
             </div>
           </div>
         </div>

@@ -243,15 +243,18 @@ function Home() {
                   }}
                 >
                   {availableServices &&
-                    availableServices.map((s, id) => (
-                      <option
-                        key={s?.serviceName + id}
-                        value={s?.serviceName}
-                        disabled={s?.status === "closed"}
-                      >
-                        {s?.serviceName}
-                      </option>
-                    ))}
+                    availableServices.map(
+                      (s, id) =>
+                        s.serviceName !== "Special Queue" && (
+                          <option
+                            key={s?.serviceName + id}
+                            value={s?.serviceName}
+                            disabled={s?.status === "closed"}
+                          >
+                            {s?.serviceName}
+                          </option>
+                        )
+                    )}
                 </select>
               </div>
 

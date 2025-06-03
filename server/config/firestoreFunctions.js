@@ -324,88 +324,150 @@ const createNewSession = async (
   //Make it such that if the customer is a priority customer,
   //the session is created with a priority status
 
-  if (branchDetails.priorityType == "Same Queue" && customerDetails.priority) {
-    console.log("Running this part");
-    //
-    //check if priority queue is empty
-    const priorityQueueRef = doc(
-      db,
-      "Organizations",
-      "Apex Bank",
-      "branches",
-      branch,
-      "availableServices",
-      service
-    );
-    const priorityQueueRequest = await getDoc(priorityQueueRef);
-    const { priorityCustomersAvailable, priorityLastNumber } =
-      priorityQueueRequest.data();
+  ///
 
-    serviceItem = {
-      ...serviceItem,
-      ticketNumber: priorityLastNumber + 1 || 1,
-    };
+  //**
 
-    //
-    //
-    console.log("priorityCustomersAvailable: ", priorityCustomersAvailable);
-    if (priorityCustomersAvailable === false) {
-      //create a new session with priority status
+  ///
 
-      await setDoc(
-        priorityQueueRef,
-        {
-          priorityCustomersAvailable: true,
-          priorityLastNumber: serviceItem.ticketNumber,
-        },
-        { merge: true }
+  if (customerDetails.priority) {
+    if (branchDetails.priorityType == "Same Queue") {
+      const priorityQueueRef = doc(
+        db,
+        "Organizations",
+        "Apex Bank",
+        "branches",
+        branch,
+        "availableServices",
+        service
       );
-      await setDoc(
-        doc(db, "Organizations", "Apex Bank", "sessions", newSessionId),
-        {
-          customerDetails: { ...customerDetails, customerNumber },
+      const priorityQueueRequest = await getDoc(priorityQueueRef);
+      const { priorityCustomersAvailable, priorityLastNumber } =
+        priorityQueueRequest.data();
+
+      serviceItem = {
+        ...serviceItem,
+        ticketNumber: priorityLastNumber + 1 || 1,
+      };
+
+      //
+      //If there are priority customers available
+      if (priorityCustomersAvailable === false) {
+        //create a new session with priority status
+
+        //
+        //set the priority customers available flag to true and increment the last number on the queue
+        await setDoc(
+          priorityQueueRef,
+          {
+            priorityCustomersAvailable: true,
+            priorityLastNumber: serviceItem.ticketNumber,
+          },
+          { merge: true }
+        );
+
+        //
+        //create a new session for the user, with priority set to true
+        await setDoc(
+          doc(db, "Organizations", "Apex Bank", "sessions", newSessionId),
+          {
+            customerDetails: { ...customerDetails, customerNumber },
+            branch,
+            service: { [serviceItem.serviceName]: serviceItem },
+            customerNumber,
+            sessionId: newSessionId,
+            date: Timestamp.now(),
+            priority: true,
+            hasBeenHandled: false,
+            ticketNumber: serviceItem.ticketNumber,
+            priorityScheme: branchDetails.priorityType,
+          }
+        );
+      } else {
+        await setDoc(
+          doc(db, "Organizations", "Apex Bank", "sessions", newSessionId),
+          {
+            customerDetails: { ...customerDetails, customerNumber },
+            branch,
+            service: { [serviceItem.serviceName]: serviceItem },
+            customerNumber,
+            sessionId: newSessionId,
+            date: Timestamp.now(),
+            priority: true,
+            hasBeenHandled: false,
+            ticketNumber: serviceItem.ticketNumber,
+            priorityScheme: branchDetails.priorityType,
+          }
+        );
+        await setDoc(
+          priorityQueueRef,
+          {
+            priorityCustomersAvailable: true,
+            priorityLastNumber: serviceItem.ticketNumber,
+          },
+          { merge: true }
+        );
+      }
+    }
+
+    if (branchDetails.priorityType === "Special Queue") {
+      // Add customer to special queue
+      try {
+        const servicesRef = doc(
+          db,
+          "Organizations",
+          "Apex Bank",
+          "branches",
           branch,
-          service: { [serviceItem.serviceName]: serviceItem },
-          customerNumber,
-          sessionId: newSessionId,
-          date: Timestamp.now(),
-          priority: true,
-          hasBeenHandled: false,
-          ticketNumber: serviceItem.ticketNumber,
+          "availableServices",
+          service
+        );
+        const serviceQueue = await getDoc(servicesRef);
+        if (serviceQueue.exists()) {
+          const serviceItem = serviceQueue.data();
+
+          await setDoc(
+            servicesRef,
+            {
+              priorityCustomersAvailable: true,
+              specialQueueLastNumber:
+                serviceItem.specialQueueLastNumber + 1 || 1,
+              specialQueueCurrentNumber:
+                serviceItem.specialQueueCurrentNumber + 1 || 1,
+            },
+            { merge: true }
+          );
+
+          await setDoc(
+            doc(db, "Organizations", "Apex Bank", "sessions", newSessionId),
+            {
+              customerDetails: { ...customerDetails, customerNumber },
+              branch,
+              service: {
+                [serviceItem.serviceName]: {
+                  ...serviceItem,
+                  ticketNumber: serviceItem.specialQueueLastNumber + 1 || 1,
+                },
+              },
+              customerNumber,
+              sessionId: newSessionId,
+              date: Timestamp.now(),
+              priority: true,
+              hasBeenHandled: false,
+              priorityScheme: branchDetails.priorityType,
+            }
+          );
         }
-      );
-    } else {
-      await setDoc(
-        doc(db, "Organizations", "Apex Bank", "sessions", newSessionId),
-        {
-          customerDetails: { ...customerDetails, customerNumber },
-          branch,
-          service: { [serviceItem.serviceName]: serviceItem },
-          customerNumber,
-          sessionId: newSessionId,
-          date: Timestamp.now(),
-          priority: true,
-          hasBeenHandled: false,
-          ticketNumber: serviceItem.ticketNumber,
-        }
-      );
-      await setDoc(
-        priorityQueueRef,
-        {
-          priorityCustomersAvailable: true,
-          priorityLastNumber: serviceItem.ticketNumber,
-        },
-        { merge: true }
-      );
+      } catch (err) {
+        console.error("Error with special queue: ", err);
+      }
     }
   } else {
     /*
-    if vip queue is empty, add customer to priority queue
-    and set numberOfPeopleBeforeVIP to priorityMaxWait 
-    number set by admin of the branch
-
-
-  */
+  if vip queue is empty, add customer to priority queue
+  and set numberOfPeopleBeforeVIP to priorityMaxWait 
+  number set by admin of the branch
+*/
     serviceItem = {
       ...serviceItem,
       ticketNumber: serviceItem.lastQueueNumber + 1,
@@ -422,6 +484,7 @@ const createNewSession = async (
           date: Timestamp.now(),
           customerDetails,
           priority: customerDetails.priority,
+          priorityScheme: branchDetails.priorityType,
         }
       );
     } catch (error) {
@@ -679,30 +742,39 @@ const endSession = async (id) => {
 };
 
 const getPriorityCustomers = async (branch, service) => {
+  let priorityCustomerArray = [];
+  const branchRef = doc(db, "Organizations", "Apex Bank", "branches", branch);
+  let branchDetails = await getDoc(branchRef);
   const priorityRef = collection(db, "Organizations", "Apex Bank", "sessions");
   const q = query(
     priorityRef,
     where("branch", "==", branch),
     where("priority", "==", true),
+    where("date", ">", getToday()),
     // where("hasBeenHandled", "==", false),
     orderBy("date")
   );
-  try {
-    const priorityCustomers = await getDocs(q);
-
-    let priorityCustomerArray = [];
+  const priorityCustomers = await getDocs(q);
+  if (branchDetails.data().priorityType !== "Same Queue") {
     priorityCustomers.forEach((doc) => {
-      if (doc.data().service[service]) {
+      if (doc.data().service) {
         priorityCustomerArray.push(doc.data());
       }
     });
-    if (!priorityCustomerArray.length > 0)
-      setPriorityCustomersNotAvailable(branch, service);
-    return priorityCustomerArray;
-  } catch (err) {
-    console.error("Error getting priority customers:\n", err);
-    return [];
+  } else {
+    try {
+      priorityCustomers.forEach((doc) => {
+        if (doc.data().service[service]) {
+          priorityCustomerArray.push(doc.data());
+        }
+      });
+    } catch (err) {
+      console.error("Error getting priority customers:\n", err);
+    }
   }
+  if (!priorityCustomerArray.length > 0)
+    setPriorityCustomersNotAvailable(branch, service);
+  return priorityCustomerArray;
 };
 
 const setPriorityCustomersNotAvailable = async (branch, service) => {
@@ -826,11 +898,47 @@ const initializeBranch = async (branch) => {
   await setDoc(
     branchRef,
     {
+      branchName: branch,
       priorityType: "Same Queue",
       priorityMaxWait: 3,
     },
     { merge: true }
   );
+};
+const initializeNewBranch = async (branch, location) => {
+  const branchRef = doc(
+    db,
+    "Organizations",
+    "Apex Bank",
+    "branches",
+    `${branch} ( ${location} )`
+  );
+  try {
+    let branchDoc = await getDoc(branchRef);
+    if (branchDoc.exists()) {
+      return "Branch already exists";
+    } else {
+      await setDoc(branchRef, {
+        branchName: `${branch} ( ${location} )`,
+        location: location,
+        priorityType: "Same Queue",
+        priorityMaxWait: 3,
+      });
+
+      await initializeService(
+        `${branch} ( ${location} )`,
+        "Account and Card Issues"
+      );
+      await initializeService(
+        `${branch} ( ${location} )`,
+        "Personal Operations"
+      );
+      return "Branch Created Successfully";
+    }
+  } catch (err) {
+    console.error("Error initializing new branch:\n", err);
+    return "Error initializing new branch";
+  }
 };
 const initializeService = async (branch, service) => {
   const servicesRef = doc(
@@ -845,13 +953,17 @@ const initializeService = async (branch, service) => {
   await setDoc(
     servicesRef,
     {
+      serviceName: service,
       lastQueueNumber: 0,
       priorityCurrentNumber: 0,
       priorityCustomersAvailable: true,
       priorityLastNumber: 0,
       serviceCurrentNumber: 1,
       numberOfPeopleBeforeVIP: 3,
-      status: "closed",
+      specialQueueCurrentNumber: 0,
+      specialQueueLastNumber: 1,
+      status: "open",
+      closingDate: Timestamp.now(),
     },
     { merge: true }
   );
@@ -1067,6 +1179,7 @@ module.exports = {
   getServiceDetails,
   initializeService,
   getStaffFromBranch,
+  initializeNewBranch,
   getServiceAnalytics,
   getWaitingCustomers,
   fetchBranchesFromDB,

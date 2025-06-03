@@ -13,6 +13,7 @@ const {
   initializeService,
   initializeBranch,
   setBranchPriorityScheme,
+  initializeNewBranch,
 } = require("../config/firestoreFunctions");
 
 module.exports = function (app) {
@@ -72,9 +73,13 @@ module.exports = function (app) {
     //   "Account and Card Issues"
     // );
     initializeBranch("Apex Bank ( Girne )");
+    initializeBranch("Apex Bank ( Upper Girne )");
+    await initializeService("Apex Bank ( Girne )", "Account and Card Issues");
     await initializeService("Apex Bank ( Girne )", "Personal Operations");
     await initializeService("Apex Bank ( Girne )", "Foreign Transactions");
     await initializeService("Apex Bank ( Girne )", "Withdrawals");
+    await initializeService("Apex Bank ( Girne )", "Deposits");
+    await initializeService("Apex Bank ( Girne )", "Special Queue");
     // const staff = await getServiceAnalytics(
     //   "Apex Bank ( Upper Girne )",
     //   "Account and Card Issues"
@@ -107,6 +112,12 @@ module.exports = function (app) {
   app.post("/admin/service-analytics", async (request, response) => {
     const { branch, service } = request.body;
     const data = await getServiceAnalytics(branch, service);
+    response.json(data);
+  });
+  app.post("/admin/add-branch", async (request, response) => {
+    console.log(request.body);
+    const { branch, location } = request.body;
+    const data = await initializeNewBranch(branch, location);
     response.json(data);
   });
 };

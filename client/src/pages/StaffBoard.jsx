@@ -100,8 +100,6 @@ function StaffBoard() {
               return filteredData;
             }
             let waitListed = filterByServiceName(data, staffDetails.assignedTo);
-            console.log("Waitlisted: ", waitListed);
-            console.log("STfab: ", staffBoardDetails);
             setWaitingCustomers((e) => (e = waitListed));
             if (staffBoardDetails) {
               let active = waitListed.find(
@@ -121,6 +119,56 @@ function StaffBoard() {
               setActiveCustomer((e) => (e = active));
             }
             setNumberOfPeopleInQueue((e) => (e = waitListed.length));
+          });
+      } catch (err) {
+        console.error("Error getting waiting customers: ", err);
+      }
+    }
+  };
+  const getPriorityCustomers = async (branch, service) => {
+    if (staffDetails) {
+      try {
+        await fetch(`${SERVER_URL}/staff/get-priority-customers`, {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            branch,
+            service,
+          }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            // function filterByServiceName(data, serviceName) {
+            //   let filteredData = data.filter(
+            //     (item) => item?.service[serviceName]
+            //   );
+            //   return filteredData;
+            // }
+            // let waitListed = filterByServiceName(data, staffDetails.assignedTo);
+            // console.log("Waitlisted: ", waitListed);
+            // console.log("STfab: ", staffBoardDetails);
+            setWaitingCustomers((e) => (e = data));
+            if (staffBoardDetails) {
+              let active = data.find(
+                (item) =>
+                  item.service[staffBoardDetails.serviceName].ticketNumber ===
+                  staffBoardDetails.serviceCurrentNumber
+              );
+              if (data.length)
+                data.forEach((cust) => {
+                  if (
+                    cust?.service[staffDetails?.assignedTo]?.ticketNumber <
+                    active?.service[staffDetails?.assignedTo]?.ticketNumber
+                  ) {
+                    active = cust;
+                  }
+                });
+              setActiveCustomer((e) => (e = active));
+            }
+            setNumberOfPeopleInQueue((e) => (e = data.length));
           });
       } catch (err) {
         console.error("Error getting waiting customers: ", err);
@@ -199,7 +247,6 @@ function StaffBoard() {
         setDailyHistory((e) => (e = data.sessionHistory));
         setWaitingCustomers((e) => (e = data.waitingCustomers));
         if (staffBoardDetails) {
-          console.log("Staff b deets: ", staffBoardDetails);
           let active = data.waitingCustomers.find(
             (item) =>
               item.service[staffBoardDetails.serviceName].ticketNumber ===
@@ -281,7 +328,9 @@ function StaffBoard() {
   useEffect(() => {
     if (staffDetails) {
       fetchServiceDetails();
-      getWaitingCustomers(staffDetails.branch);
+      staffDetails.assignedTo === "Special Queue"
+        ? getPriorityCustomers(staffDetails.branch, staffDetails.assignedTo)
+        : getWaitingCustomers(staffDetails.branch);
       getDailyHistory();
     }
   }, [staffDetails]);
@@ -298,10 +347,7 @@ function StaffBoard() {
             active = cust;
           }
         });
-      console.log("active: ", active);
       setActiveCustomer((e) => (e = active));
-      console.log("active: ", activeCustomer);
-      console.log("wait: ", numberOfPeopleInQueue);
     }
     setNumberOfPeopleInQueue(waitingCustomers.length);
 
@@ -353,7 +399,7 @@ function StaffBoard() {
             <h1>
               {waitingCustomers[0]?.customerDetails?.priority
                 ? waitingCustomers[0]?.service[staffDetails.assignedTo]
-                    .ticketNumber
+                    ?.ticketNumber
                 : staffBoardDetails.serviceCurrentNumber || 0}
             </h1>
           </div>

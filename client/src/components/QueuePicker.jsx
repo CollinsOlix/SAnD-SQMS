@@ -3,8 +3,12 @@ import "../styles/serviceCenter.css";
 import AddIcon from "@mui/icons-material/Add";
 import AppContext from "../includes/context";
 import Modal from "react-modal";
+import { useEffect } from "react";
 
-const QueuePicker = ({ index, item, active, noWaitingNumber }) => {
+const QueuePicker = ({ index, item, active, isPriorityCustomer }) => {
+  useEffect(() => {
+    console.log("QueuePicker ", item);
+  }, []);
   const {
     customerBranchOption,
     sessionDetails,
@@ -44,7 +48,7 @@ const QueuePicker = ({ index, item, active, noWaitingNumber }) => {
       >
         {item.ticketNumber}
       </p>
-      {!noWaitingNumber && (
+      {
         <>
           <p style={{ fontWeight: "bold", fontSize: "1.3em" }}>
             There Are Currently
@@ -58,7 +62,7 @@ const QueuePicker = ({ index, item, active, noWaitingNumber }) => {
             people waiting
           </p>
         </>
-      )}
+      }
       <p style={{ fontWeight: "bold", fontSize: "1.3em" }}>
         You will be called upon shortly
       </p>

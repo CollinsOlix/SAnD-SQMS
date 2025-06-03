@@ -127,6 +127,11 @@ module.exports = function (app) {
     let data = await getWaitingCustomers(branch);
     response.json(data);
   });
+  app.post("/staff/get-priority-customers", async (request, response) => {
+    const { branch, service } = request.body;
+    let data = await getPriorityCustomers(branch, service);
+    response.json(data);
+  });
 
   app.post("/staff/get-next-customer", async (request, response) => {
     const {
@@ -138,7 +143,7 @@ module.exports = function (app) {
       serviceDuration,
     } = request.body;
     let sessionHistory;
-    console.log("SessionId: ", sessionId);
+    console.log("Session ID: ", sessionId);
     if (sessionId) {
       sessionHistory = await addSessionToHistory(
         branch,
